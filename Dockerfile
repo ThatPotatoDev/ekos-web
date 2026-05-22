@@ -1,28 +1,19 @@
-FROM node:lts-alpine3.12 as clientbuild
+# Use an official Node runtime as a parent image
+FROM node:20-alpine AS build
 
-RUN mkdir /client
-WORKDIR /client
-COPY client/package.json /client
-COPY client/package-lock.json /client
+# Set the working directory
+WORKDIR /app
+
+# Install app dependencies
+COPY package.json .
+COPY package-lock.json .
 RUN npm install
 
-WORKDIR /client
-COPY client/ /client
-RUN npm run build
+# Bundle app source
+COPY . .
 
-FROM node:lts-alpine3.12
-
-RUN mkdir /server
-
-WORKDIR /server
-COPY server/package.json /server
-RUN npm install
-
-COPY --from=clientbuild /client/dist/ /server/static
-
-WORKDIR /server
-COPY server/ /server
-
-EXPOSE 3000
-
-CMD ["node", "index.js"]
+# Build the app for production
+FROM node:20-alpine AS production
+WORKDIR /app
+COPY --from=build /app .
+CMD [ "npm", "start" ]

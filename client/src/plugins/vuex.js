@@ -6,7 +6,10 @@ import {
   ALIGN_SOLVE,
   ALIGN_STOP,
   CAPTURE_PREVIEW,
-  CAPTURE_SET_SETTINGS,
+  CAPTURE_SET_ALL_SETTINGS,
+  CAPTURE_GET_ALL_SETTINGS,
+  CAPTURE_GET_SEQUENCES,
+  CAPTURE_GET_PREVIEW_LABEL,
   CAPTURE_START,
   CAPTURE_STOP,
   DEVICE_GET,
@@ -14,13 +17,8 @@ import {
   FOCUS_RESET,
   FOCUS_START,
   FOCUS_STOP,
-  GET_CAMERAS,
-  GET_CAPS,
   GET_DEVICES,
-  GET_DOMES,
   GET_DRIVERS,
-  GET_FILTER_WHEELS,
-  GET_MOUNTS,
   GET_PROFILES,
   GET_STATES,
   GUIDE_CLEAR,
@@ -47,6 +45,11 @@ import {
   OPTION_SET_NOTIFICATIONS,
   SET_CLIENT_STATE,
   START_PROFILE,
+  DIALOG_GET_INFO,
+  CAPTURE_REMOVE_SEQUENCE,
+  DEVICE_PROPERTY_GET,
+  DEVICE_PROPERTY_ADD,
+  FM_GET_DATA,
 } from '../util/messageTypes';
 
 
@@ -70,15 +73,12 @@ const defaultEkosStates = {
     status: "Idle"
   },
   capture: {
-    status: "Idle"
+    status: "Idle",
+    filters: []
   },
   align: {
     status: "Idle"
   },
-  camera: null,
-  cameras: [],
-  filter_wheels: [],
-  filters: [],
   notifications: [],
   lastNotification: null,
   devices: {},
@@ -101,7 +101,9 @@ const store = createStore({
       lat: null,
       lon: null,
     },
-    profiles: [],
+    profiles: { profiles: [], selectedProfile: "", selectedProfileObj: {} },
+    sequenceQueue: [],
+    captureSettings: {},
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
   },
   getters: {
@@ -189,27 +191,22 @@ const store = createStore({
         ...state.connection,
         ...message.payload,
       };
-
       if (message.payload.connected) {
         if (message.payload.online) {
-          this.dispatch("sendMessage", { type: SET_CLIENT_STATE, payload: { state: true } });
-          this.dispatch("sendMessage", { type: GET_STATES });
-          this.dispatch("sendMessage", { type: GET_CAMERAS });
-          this.dispatch("sendMessage", { type: GET_MOUNTS });
-          this.dispatch("sendMessage", { type: GET_FILTER_WHEELS });
-          this.dispatch("sendMessage", { type: GET_DOMES });
-          this.dispatch("sendMessage", { type: GET_CAPS });
-          this.dispatch("sendMessage", { type: GET_DRIVERS });
-          this.dispatch("sendMessage", { type: OPTION_SET_HIGH_BANDWIDTH, payload: true });
-          this.dispatch("sendMessage", { type: OPTION_SET_IMAGE_TRANSFER, payload: true });
-          this.dispatch("sendMessage", { type: OPTION_SET_NOTIFICATIONS, payload: true });
+          this.dispatch("sendMsg", [GET_PROFILES]);
+          this.dispatch("sendMsg", [GET_DRIVERS]);
+          this.dispatch("sendMsg", [OPTION_SET_HIGH_BANDWIDTH, true]);
+          this.dispatch("sendMsg", [OPTION_SET_IMAGE_TRANSFER, true]);
+          this.dispatch("sendMsg", [OPTION_SET_NOTIFICATIONS, true]);
         } else {
           // Still connected to KStars, but Ekos was closed. Reset states to default.
 
           Object.keys(defaultEkosStates).forEach(k => {
             state.k = defaultEkosStates[k];
           });
-
+          state.capture.isoList = null;
+          state.capture.usesGain = false;
+          state.capture.filters = [];
           this.dispatch("sendMessage", { type: GET_PROFILES });
         }
       }
@@ -255,39 +252,17 @@ const store = createStore({
       state.notifications.push(msg);
       state.lastNotification = msg;
     },
-    [CAPTURE_SET_SETTINGS](state, message) {
+    [CAPTURE_GET_ALL_SETTINGS](state, message) {
       state.capture.settings = {
-        ...state.capture.settings,
         ...message.payload,
       };
-
-      state.filter_wheels.forEach(fw => {
-        if (fw.name === state.capture.settings.fw) {
-          state.filters= [...fw.filters];
-        }
-      });
     },
-    [GET_CAMERAS](state, message) {
-      const cameras = [];
-      for (const key in message.payload) {
-        cameras.push(JSON.parse(JSON.stringify(message.payload[key])));
-      }
-      state.cameras = cameras;
+    [CAPTURE_GET_SEQUENCES](state, message) {
+      state.sequenceQueue = message.payload;
     },
-    [GET_FILTER_WHEELS](state, message) {
-      const filter_wheels = [];
-
-      for (const key in message.payload) {
-        const item = message.payload[key];
-
-        if (state.capture.settings && state.capture.settings.fw && state.capture.settings.fw === item.name) {
-          state.filters = [...item.filters];
-        }
-
-        filter_wheels.push(JSON.parse(JSON.stringify(item)));
-      }
-
-      state.filter_wheels = filter_wheels;
+    [DIALOG_GET_INFO](state, message) {
+      //todo: pop up dialogs
+      // console.log(message.payload)
     },
     [GET_DEVICES](state, message) {
       for (const key in message.payload) {
@@ -296,11 +271,31 @@ const store = createStore({
       }
     },
     [DEVICE_GET](state, message) {
+      if (message.payload.device === state.profiles.selectedProfileObj.ccd) {
+        let prop = message.payload.properties.find(p => p.name === "CCD_ISO");
+        if (prop !== undefined) {
+          state.capture.isoList = prop.switches.map(p => p.label);
+          state.capture.usesGain = false;
+        } else {
+          prop = message.payload.properties.find(p => p.name === "CCD_GAIN");
+          state.capture.isoList = null;
+          state.capture.usesGain = true;
+        }
+      }
       const device = buildDevice(message.payload);
       state.devices[device.name] = device;
     },
     [GET_PROFILES](state, message) {
-      state.profiles = [...message.payload.profiles];
+      state.profiles = message.payload;
+      if (state.profiles.selectedProfileObj === undefined
+        || state.profiles.selectedProfileObj.name !== state.profiles.selectedProfile) {
+        state.profiles.selectedProfileObj = state.profiles.profiles.find(p => p.name === state.profiles.selectedProfile);
+      }
+      this.dispatch("sendMsg", [DEVICE_GET, { device: state.profiles.selectedProfileObj.ccd }]);
+      this.dispatch("sendMsg", [GET_STATES]);
+    },
+    [FM_GET_DATA](state, message) {
+      state.capture.filters = message.payload.filters.map(f => f.label);
     },
     [LIVESTACK_LOG](state, message) {
       const msg = { ts: new Date(), message: message.payload }
@@ -320,61 +315,45 @@ const store = createStore({
     mountUnpark: ({ dispatch }) => {
       dispatch('sendMessage', { type: MOUNT_UNPARK });
     },
-    mountAbort: ({ dispatch }) => {
-      dispatch('sendMessage', { type: MOUNT_ABORT });
-    },
-    mountSetTracking: ({ dispatch }, enabled) => {
-      dispatch('sendMessage', {
-        type: MOUNT_SET_TRACKING,
-        payload: { enabled },
+    mountAbort: ({ dispatch }) => { dispatch('sendMessage', [MOUNT_ABORT]); },
+    mountSetTracking: ({ dispatch }, enabled) => { dispatch('sendMsg', [MOUNT_SET_TRACKING, { enabled: enabled }]); },
+    guideStart: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_START]); },
+    guideStop: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_STOP]); },
+    guideClear: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_CLEAR]); },
+
+    alignSolve: ({ dispatch }) => { dispatch('sendMsg', [ALIGN_SOLVE]); },
+    alignStop: ({ dispatch }) => { dispatch('sendMsg', [ALIGN_STOP]); },
+
+    focusStop: ({ dispatch }) => { dispatch('sendMsg', [FOCUS_STOP]); },
+    focusStart: ({ dispatch }) => { dispatch('sendMsg', [FOCUS_START]); },
+    focusReset: ({ dispatch }) => { dispatch('sendMsg', [FOCUS_RESET]); },
+
+    captureStop: ({ dispatch }) => { dispatch('sendMsg', [CAPTURE_STOP]); },
+    captureSetAllSettings: ({ dispatch }, settings) => { dispatch('sendMsg', [CAPTURE_SET_ALL_SETTINGS, settings]); },
+    captureRemoveSequence: ({ dispatch }, seqIndex) => { dispatch('sendMsg', [CAPTURE_REMOVE_SEQUENCE, { index: seqIndex }]); },
+    captureStart: ({ dispatch }) => { dispatch('sendMsg', [CAPTURE_START]); },
+    capturePreview: ({ dispatch }) => { dispatch('sendMsg', [CAPTURE_PREVIEW]); },
+    captureUpdateSettings: ({ dispatch }) => {
+      dispatch('captureSetAllSettings', {
+        ...store.state.capture.settings,
+        ...store.state.captureSettings,
       });
     },
-    guideStart: ({ dispatch }) => {
-      dispatch('sendMessage', { type: GUIDE_START });
-    },
-    guideStop: ({ dispatch }) => {
-      dispatch('sendMessage', { type: GUIDE_STOP });
-    },
-    guideClear: ({ dispatch }) => {
-      dispatch('sendMessage', { type: GUIDE_CLEAR });
-    },
-    alignSolve: ({ dispatch }) => {
-      dispatch('sendMessage', { type: ALIGN_SOLVE });
-    },
-    alignStop: ({ dispatch }) => {
-      dispatch('sendMessage', { type: ALIGN_STOP });
-    },
-    focusStop: ({ dispatch }) => {
-      dispatch('sendMessage', { type: FOCUS_STOP });
-    },
-    focusStart: ({ dispatch }) => {
-      dispatch('sendMessage', { type: FOCUS_START });
-    },
-    focusReset: ({ dispatch }) => {
-      dispatch('sendMessage', { type: FOCUS_RESET });
-    },
-    captureStop: ({ dispatch }) => {
-      dispatch('sendMessage', { type: CAPTURE_STOP });
-    },
-    captureStart: ({ dispatch }) => {
-      dispatch('sendMessage', { type: CAPTURE_START });
-    },
-    capturePreview: ({ dispatch, state }, settings) => {
-      settings = {
-        ...state.capture.settings,
-        ...settings,
-      }
-
-      dispatch('sendMessage', { type: CAPTURE_PREVIEW, payload: settings });
-    },
     devicePropertySet: ({ dispatch }, data) => {
-      dispatch('sendMessage', { type: DEVICE_PROPERTY_SET, payload: data });
+      dispatch('sendMsg', [DEVICE_PROPERTY_SET, data]);
     },
     startProfile: ({ dispatch }, profile) => {
-      dispatch('sendMessage', { type: START_PROFILE, payload: { name: profile } });
+      dispatch('sendMsg', [START_PROFILE, { name: profile }]);
+    },
+
+    sendMsg: ({ dispatch }, args) => {
+      if (typeof args === 'string') {
+        throw new Error("typeof args but not be 'string'");
+      }
+      const [type, payload = {}] = args;
+      dispatch('sendMessage', { type: type, payload: payload });
     },
   }
 });
-
 
 export default store;

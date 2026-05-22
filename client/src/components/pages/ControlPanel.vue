@@ -5,10 +5,10 @@
     <v-divider class="mb-2"></v-divider>
     <v-expansion-panels>
       <v-expansion-panel v-model="devices" v-for="device in devices" :key="device.name">
-        <v-expansion-panel-header>{{device.name}}</v-expansion-panel-header>
-        <v-expansion-panel-content>
+        <v-expansion-panel-title>{{device.name}}</v-expansion-panel-title>
+        <v-expansion-panel-text>
           <Device :device="device" />
-        </v-expansion-panel-content>
+        </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
   </div>
@@ -17,6 +17,7 @@
 import Device from "@/components/Device.vue";
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapState } from "vuex";
+import { GET_DEVICES } from "../../util/messageTypes";
 
 export default {
   components: {
@@ -24,13 +25,13 @@ export default {
     LastNotification,
   },
   beforeMount() {
-    this.sendMessage({ type: "get_devices" });
+    this.sendMsg([GET_DEVICES]);
   },
   computed: {
     ...mapState(["devices"]),
   },
   methods: {
-    ...mapActions(["sendMessage"]),
+    ...mapActions(["sendMsg"]),
   },
 };
 </script>

@@ -2,29 +2,44 @@
   <div id="celestial-map"></div>
 </template>
 <style>
-  #celestial-map {
-    max-width: 800px;
-  }
-  #celestial-map canvas {
-    margin: auto;
-    display: block;
-    position: relative;
-  }
+#celestial-map {
+  max-width: 800px;
+}
+
+#celestial-map canvas {
+  margin: auto;
+  display: block;
+  position: relative;
+}
 </style>
+<!-- <script src="https://ofrohn.github.io/celestial.js"></script> -->
 <script>
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = src
+    s.onload = resolve
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
 export default {
   props: {
     center: Array,
   },
   async mounted() {
-    const skymap = await import('d3-celestial');
-    this.Celestial = skymap.Celestial();
-    const cfg = this.buildConfig();
-    this.Celestial.display(cfg);
+    await loadScript('/js/d3.min.js');
+    await loadScript('/js/d3.geo.projection.min.js');
+    await loadScript('/js/celestial.js');
+
+    this.Celestial = Celestial;
+    this.Celestial.display(this.buildConfig());
+    this.ready = true;
   },
   data() {
     return {
       Celestial: null,
+      ready: false,
     };
   },
   methods: {
@@ -46,7 +61,7 @@ export default {
   },
   watch: {
     center(nv, ov) {
-      if (!this.Celestial) return;
+      if (!this.ready) return;
 
       let update = false;
       if (!ov || ov.length != 2 || nv[0] !== ov[0] || nv[1] !== ov[1]) {

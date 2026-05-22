@@ -1,24 +1,16 @@
-# ekos-web
+# Ekos Web
 
-## Project setup
-```
-npm install
-```
+This project has been updated to use Vite instead of Vue CLI. Please refer to the following instructions regarding the new setup and scripts.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+## Updated Scripts
 
-### Compiles and minifies for production
-```
-npm run build
-```
+- **Development**: `vite`  
+  Now, the development server can be started by running `npm run dev`.
 
-### Lints and fixes files
-```
-npm run lint
-```
+- **Build**: `vite build`  
+  Use this command to create a production build of the application.
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## Removed Outdated References
+- All references to Vue CLI have been removed as they are no longer relevant to this project.
+
+For further information, please check the official Vite documentation or the project wiki.

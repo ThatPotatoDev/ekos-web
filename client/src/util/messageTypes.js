@@ -6,11 +6,6 @@ export const LIVESTACK_LOG = 'livestack_log';
 
 export const GET_CONNECTION = 'get_connection';
 export const GET_STATES = 'get_states';
-export const GET_CAMERAS = 'get_cameras';
-export const GET_MOUNTS = 'get_mounts';
-export const GET_FILTER_WHEELS = 'get_filter_wheels';
-export const GET_DOMES = 'get_domes';
-export const GET_CAPS = 'get_caps';
 export const GET_DRIVERS = 'get_drivers';
 export const GET_DEVICES = 'get_devices';
 
@@ -53,10 +48,13 @@ export const CAPTURE_TOGGLE_CAMERA = 'capture_toggle_camera';
 export const CAPTURE_TOGGLE_FILTER_WHEEL = 'capture_toggle_filter_wheel';
 export const CAPTURE_START = 'capture_start';
 export const CAPTURE_STOP = 'capture_stop';
-export const CAPTURE_GET_SEQUENCES = 'capture_get_sequences';
 export const CAPTURE_ADD_SEQUENCE = 'capture_add_sequence';
 export const CAPTURE_REMOVE_SEQUENCE = 'capture_remove_sequence';
-export const CAPTURE_SET_SETTINGS = 'capture_set_settings';
+export const CAPTURE_CLEAR_SEQUENCES = 'capture_clear_sequences';
+export const CAPTURE_GET_SEQUENCES = 'capture_get_sequences';
+export const CAPTURE_SET_ALL_SETTINGS = 'capture_set_all_settings';
+export const CAPTURE_GET_ALL_SETTINGS = 'capture_get_all_settings';
+export const CAPTURE_GET_PREVIEW_LABEL = 'capture_get_preview_label';
 export const CAPTURE_LOOP = 'capture_loop';
 
 export const MOUNT_PARK = 'mount_park';
@@ -98,12 +96,14 @@ export const ALIGN_SET_SETTINGS = 'align_set_settings';
 
 export const PAH_START = 'polar_start';
 export const PAH_STOP = 'polar_stop';
-export const PAH_SET_SETTINGS = 'polar_set_settings';
 export const PAH_REFRESH = 'polar_refresh';
 export const PAH_SET_CROSSHAIR = 'polar_set_crosshair';
 export const PAH_SELECT_STAR_DONE = 'polar_star_select_done';
 export const PAH_REFRESHING_DONE = 'polar_refreshing_done';
 export const PAH_RESET_VIEW = 'polar_reset_view';
+export const PAH_SLEW_DONE = 'polar_slew_done';
+export const PAH_PAH_SET_ZOOM = 'polar_set_zoom';
+export const PAH_SET_ALGORITHM = 'polar_set_algorithm';
 
 export const OPTION_SET_HIGH_BANDWIDTH = 'option_set_high_bandwidth';
 export const OPTION_SET_IMAGE_TRANSFER = 'option_set_image_transfer';
@@ -128,3 +128,6 @@ export const DEVICE_PROPERTY_UNSUBSCRIBE = 'device_property_unsubscribe';
 
 export const DIALOG_GET_INFO = 'dialog_get_info';
 export const DIALOG_GET_RESPONSE = 'dialog_get_response';
+
+export const FM_GET_DATA = 'fm_get_data';
+export const FM_SET_DATA = 'fm_set_data';

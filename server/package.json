@@ -1,18 +1,9 @@
 {
-  "name": "ekos-web",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "node-gpsd": "^0.3.2",
-    "node-static": "^0.7.11",
-    "reconnecting-websocket": "^4.4.0",
-    "server-graceful-shutdown": "^0.1.2",
-    "ws": "^7.4.1"
-  }
+    "name": "ekos-web",
+    "version": "0.1.0",
+    "description": "A web application for managing EKOS projects.",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js"
+    }
 }

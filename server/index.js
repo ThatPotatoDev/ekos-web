@@ -75,7 +75,7 @@ const saveToLastMessages = (msg) => {
 };
 
 const sendJSON = (ws, msg) => {
-  if (debug) {
+  if (debug && msg.type === "new_capture_state") {
     console.log('sending message', msg);
   }
 
@@ -84,6 +84,7 @@ const sendJSON = (ws, msg) => {
 
 const setupMediaServerOptions = (ws) => {
   sendJSON(ws, { type: "set_blobs", payload: true });
+  sendJSON(ws, { type: "option_set", payload: { options: [{ name: "ekosliveCloud", value: true }] } });
 }
 
 gpsdListener.on('TPV', (loc) => {
@@ -111,11 +112,15 @@ gpsdListener.connect(() => {
 });
 
 interfaceServer.on("connection", (ws) => {
+
   ws.on("message", (msg) => {
     // Every message we get from the client should be forwarded to Ekos.
     messageServer.clients.forEach(c => {
       sendJSON(c, JSON.parse(msg));
     });
+  });
+  messageServer.clients.forEach(c => {
+    sendJSON(c, { type: "set_client_state", payload: { state: true } })
   });
 
   // Update the web client with our current state.
@@ -129,12 +134,12 @@ interfaceServer.on("connection", (ws) => {
   });
 });
 
-messageServer.on("connection", (ws) => {
+messageServer.on("connection", (ws, req) => {
   ws.on("message", (msg) => {
     // Forward all messages to the web client, remembering the last one of
     // each type for future connections.
     const msgObj = JSON.parse(msg);
-
+    console.log("message", msgObj.type)
     saveToLastMessages(msgObj);
 
     interfaceServer.clients.forEach(c => {
@@ -152,6 +157,9 @@ messageServer.on("connection", (ws) => {
         lastMessages = {};
       }
     }
+  });
+  ws.on("error", (e) => {
+    console.log("error", e);
   });
 
   ws.on("close", () => {
@@ -211,7 +219,7 @@ server.addListener("request", (req, res) => {
     case "/api/authenticate": {
       res.writeHead(200);
       res.end(JSON.stringify({
-        "token": "TOKEN",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibmRzd2FydHoxMUBnbWFpbC5jb20iLCJpYXQiOjE3NzkzMDc4MjcsImV4cCI6MTc3OTU2NzAyN30.y-QaJH9CzDw0UoUhbI6aWElrC6mwwIG_iHtG7W4HxzM",
         "success": true,
       }));
       break;
@@ -222,13 +230,14 @@ server.addListener("request", (req, res) => {
 })
 
 server.on("upgrade", (req, socket, head) => {
-  console.log('upgrade started', req.url);
+  console.log('upgrade started', req.url.split("?")[0]);
 
   const pathname = url.parse(req.url).pathname;
 
   switch (pathname) {
     case "/message/ekos": {
       messageServer.handleUpgrade(req, socket, head, (ws) => {
+        // console.log(req);
         messageServer.emit("connection", ws, req);
       });
       break;
@@ -261,7 +270,7 @@ if (livestackEndpoint) {
     WebSocket: WebSocket,
   });
 
-  livestack.addEventListener("error", () => {});
+  livestack.addEventListener("error", () => { });
 
   livestack.addEventListener("message", (msg) => {
     const msgObj = JSON.parse(msg.data);

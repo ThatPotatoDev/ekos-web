@@ -1,11 +1,20 @@
 {
+  "name": "ekos-web",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
-    "dev:client": "cd client && npm run dev",
-    "dev:server": "cd server && nodemon index.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
-  "devDependencies": {
-    "concurrently": "^9.2.0",
-    "nodemon": "^3.1.10"
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-gpsd": "^0.3.2",
+    "node-static": "^0.7.11",
+    "reconnecting-websocket": "^4.4.0",
+    "server-graceful-shutdown": "^0.1.2",
+    "ws": "^7.4.1"
   }
 }

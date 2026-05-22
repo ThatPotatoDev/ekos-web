@@ -1,3 +1,9 @@
-h1, h2, h3, h4, h5, h6, p {
+/* h1, h2, h3, h4, h5, h6, p {
     margin: 0 .25em;
+} */
+.noBackgroundFr {
+    background: rgb(0 0 0 / 0%) !important;
+}
+.greenFilledIn {
+    color: rgb(86, 185, 91);
 }

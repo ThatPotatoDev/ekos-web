@@ -8,7 +8,6 @@ import store from '@/plugins/vuex'
 import VueNativeSock from 'vue-native-websocket-vue3'
 import 'vuetify/styles'
 
-
 const app = createApp(App)
 
 app.use(VueNativeSock, 'ws://' + window.location.hostname + ':3000/interface', {
@@ -16,6 +15,8 @@ app.use(VueNativeSock, 'ws://' + window.location.hostname + ':3000/interface', {
   store: store,
   format: 'json',
 })
+//todo: remove
+window.store = store;
 
 app.use(vuetify)
 app.use(store)

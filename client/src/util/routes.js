@@ -6,7 +6,7 @@ import LiveStack from '@/components/pages/LiveStack.vue'
 import Logs from '@/components/pages/Logs.vue'
 import Main from '@/components/pages/Main.vue'
 import Mount from '@/components/pages/Mount.vue'
-//import ControlPanel from '@/components/pages/ControlPanel.vue'
+import ControlPanel from '@/components/pages/ControlPanel.vue'
 
 import camera from "@iconify/icons-mdi/camera"
 import cloud from "@iconify/icons-mdi/cloud"
@@ -69,13 +69,13 @@ const routes = [{
   path: "/livestack",
   icon: "camera",
   component: LiveStack,
-},/*{
+},{
   name: "ControlPanel",
   label: "Control Panel",
   path: "/controlpanel",
   icon: "cogs",
   component: ControlPanel,
-}*/];
+}];
 
 export {
   Icon as IconifyIcon, routes

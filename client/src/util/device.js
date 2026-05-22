@@ -22,13 +22,15 @@ const SWITCH_STATE = {
   ISS_ON: 1,
 };
 
-const buildDevice = (properties) => {
-  if (!properties) {
+const buildDevice = (payload) => {
+  if (!payload) {
     return null;
   }
 
+  let properties = payload.properties;
+
   let device = {
-    name: null,
+    name: payload.device,
     groups: {},
   };
 
@@ -39,11 +41,6 @@ const buildDevice = (properties) => {
 
     device.groups[p.group].properties.push(p);
 
-    if (p.name === "DRIVER_INFO") {
-      device.name = p.texts.find(t => {
-        return t.name === "DRIVER_NAME";
-      }).value;
-    }
   });
 
   return device;
