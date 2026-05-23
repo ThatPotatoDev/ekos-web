@@ -23,16 +23,19 @@
         >{{trackingButtonText}}</v-btn>
       </v-list-item>
     </v-list>
+    <MoveAxis />
   </div>
 </template>
 <script>
 import SkyMap from "@/components/SkyMap.vue";
+import MoveAxis from "@/components/mount/MoveAxis.vue";
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   components: {
     SkyMap,
+    MoveAxis,
     LastNotification,
   },
   computed: {

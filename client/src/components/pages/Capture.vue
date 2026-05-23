@@ -8,7 +8,7 @@
     </v-img>
     <v-divider class="mb-2"></v-divider>
     <v-btn :outlined="showCrosshairs" @click.stop="showCrosshairs = !showCrosshairs">
-      <iconify-icon icon="target" height="24"></iconify-icon>
+      <iconify-icon icon="target" height="24" />
     </v-btn>
     <v-divider class="mb-2 mt-2"></v-divider>
     <div class="text-h6">{{ capture.status }}</div>
@@ -80,13 +80,11 @@
 </template>
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
-import target from "@iconify/icons-mdi/target";
 import SequenceQueue from "@/components/SequenceQueue.vue"
-import { Icon, addIcon } from '@iconify/vue';
+import { Icon } from '@iconify/vue';
 import { mapActions, mapState } from "vuex";
 import { CAPTURE_GET_ALL_SETTINGS } from "../../util/messageTypes";
 
-addIcon('target', target);
 
 export default {
   components: {
@@ -96,9 +94,6 @@ export default {
   },
   data() {
     return {
-      selectedCamera: null,
-      selectedType: null,
-      exp: null,
       showCrosshairs: false,
       modifyableOptions: ["captureTypeS", "FilterPosCombo", "captureExposureN", "captureCountN", "captureISOS", "captureGainN"],
     };
