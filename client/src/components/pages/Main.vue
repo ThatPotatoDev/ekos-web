@@ -21,6 +21,9 @@
           <li>RA: {{ra}}</li>
           <li>DEC: {{dec}}</li>
         </ul>
+        <ul v-if="mount.meridianFlipText">
+          <li>{{mount.meridianFlipText}}</li>
+        </ul>
       </li>
       <li>
         Guider: {{guide.status}}

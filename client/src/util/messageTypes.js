@@ -105,10 +105,11 @@ export const PAH_SLEW_DONE = 'polar_slew_done';
 export const PAH_PAH_SET_ZOOM = 'polar_set_zoom';
 export const PAH_SET_ALGORITHM = 'polar_set_algorithm';
 
-export const OPTION_SET_HIGH_BANDWIDTH = 'option_set_high_bandwidth';
 export const OPTION_SET_IMAGE_TRANSFER = 'option_set_image_transfer';
 export const OPTION_SET_NOTIFICATIONS = 'option_set_notifications';
 export const OPTION_SET_CLOUD_STORAGE = 'option_set_cloud_storage';
+export const OPTION_GET = 'option_get';
+export const OPTION_SET = 'option_set';
 
 export const SET_BLOBS = 'set_blobs';
 

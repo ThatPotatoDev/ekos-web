@@ -3,7 +3,7 @@ function h2g(ra) {
 }
 
 const hms = (dec) => {
-  const H = dec / 15;
+  const H = dec != 0 ? dec / 15 : 0;
 
   const h = Math.floor(H);
   const m = Math.floor(60 * (Math.abs(H) - h));

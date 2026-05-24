@@ -12,12 +12,12 @@ const livestackEndpoint = process.env.LIVESTACK_ENDPOINT;
 const server = http.createServer();
 
 // These three listen for messages from Ekos.
-const messageServer = new WebSocket.Server({ noServer: true });
+const messageEkos = new WebSocket.Server({ noServer: true });
 const mediaServer = new WebSocket.Server({ noServer: true });
 const cloudServer = new WebSocket.Server({ noServer: true });
 
 // This one listens for messages from the web client.
-const interfaceServer = new WebSocket.Server({ noServer: true });
+const messageUser = new WebSocket.Server({ noServer: true });
 
 // The signals we want to handle
 // NOTE: although it is tempting, the SIGKILL signal (9) cannot be intercepted and handled
@@ -31,10 +31,10 @@ var signals = {
 const shutdown = (signal, value) => {
   console.log("shutdown!");
 
-  messageServer.close();
+  messageEkos.close();
   mediaServer.close();
   cloudServer.close();
-  interfaceServer.close();
+  messageUser.close();
 
   server.shutdown(() => {
     console.log(`server stopped by ${signal} with value ${value}`);
@@ -75,7 +75,7 @@ const saveToLastMessages = (msg) => {
 };
 
 const sendJSON = (ws, msg) => {
-  if (debug && msg.type === "new_capture_state") {
+  if (debug) {
     console.log('sending message', msg);
   }
 
@@ -84,7 +84,6 @@ const sendJSON = (ws, msg) => {
 
 const setupMediaServerOptions = (ws) => {
   sendJSON(ws, { type: "set_blobs", payload: true });
-  sendJSON(ws, { type: "option_set", payload: { options: [{ name: "ekosliveCloud", value: true }] } });
 }
 
 gpsdListener.on('TPV', (loc) => {
@@ -100,7 +99,7 @@ gpsdListener.on('TPV', (loc) => {
 
   saveToLastMessages(msg);
 
-  interfaceServer.clients.forEach(c => {
+  messageUser.clients.forEach(c => {
     sendJSON(c, msg);
   });
 });
@@ -111,21 +110,20 @@ gpsdListener.connect(() => {
   gpsdListener.watch();
 });
 
-interfaceServer.on("connection", (ws) => {
-
-  ws.on("message", (msg) => {
+messageUser.on("connection", (clientWs) => {
+  clientWs.on("message", (msg) => {
     // Every message we get from the client should be forwarded to Ekos.
-    messageServer.clients.forEach(c => {
+    messageEkos.clients.forEach(c => {
       sendJSON(c, JSON.parse(msg));
     });
   });
-  messageServer.clients.forEach(c => {
+  messageEkos.clients.forEach(c => {
     sendJSON(c, { type: "set_client_state", payload: { state: true } })
   });
 
   // Update the web client with our current state.
   Object.keys(lastMessages).forEach(key => {
-    sendJSON(ws, { type: key, payload: lastMessages[key] });
+    sendJSON(clientWs, { type: key, payload: lastMessages[key] });
   });
 
   // Tell Ekos to send us images.
@@ -134,15 +132,14 @@ interfaceServer.on("connection", (ws) => {
   });
 });
 
-messageServer.on("connection", (ws, req) => {
-  ws.on("message", (msg) => {
+messageEkos.on("connection", (ekosWs, req) => {
+  ekosWs.on("message", (msg) => {
     // Forward all messages to the web client, remembering the last one of
     // each type for future connections.
     const msgObj = JSON.parse(msg);
-    console.log("message", msgObj.type)
     saveToLastMessages(msgObj);
 
-    interfaceServer.clients.forEach(c => {
+    messageUser.clients.forEach(c => {
       sendJSON(c, msgObj);
     });
 
@@ -158,12 +155,12 @@ messageServer.on("connection", (ws, req) => {
       }
     }
   });
-  ws.on("error", (e) => {
+  ekosWs.on("error", (e) => {
     console.log("error", e);
   });
 
-  ws.on("close", () => {
-    interfaceServer.clients.forEach(c => {
+  ekosWs.on("close", () => {
+    messageUser.clients.forEach(c => {
       sendJSON(c, { type: "new_connection_state", payload: { connected: false, online: false } });
     });
   });
@@ -188,7 +185,7 @@ mediaServer.on("connection", (ws) => {
 
     data.payload['image'] = "data:image/jpeg;base64," + encoded;
 
-    interfaceServer.clients.forEach(c => {
+    messageUser.clients.forEach(c => {
       sendJSON(c, data);
     });
 
@@ -236,9 +233,9 @@ server.on("upgrade", (req, socket, head) => {
 
   switch (pathname) {
     case "/message/ekos": {
-      messageServer.handleUpgrade(req, socket, head, (ws) => {
+      messageEkos.handleUpgrade(req, socket, head, (ws) => {
         // console.log(req);
-        messageServer.emit("connection", ws, req);
+        messageEkos.emit("connection", ws, req);
       });
       break;
     }
@@ -254,9 +251,9 @@ server.on("upgrade", (req, socket, head) => {
       });
       break;
     }
-    case "/interface": {
-      interfaceServer.handleUpgrade(req, socket, head, (ws) => {
-        interfaceServer.emit("connection", ws, req);
+    case "/message/user": {
+      messageUser.handleUpgrade(req, socket, head, (ws) => {
+        messageUser.emit("connection", ws, req);
       });
       break;
     }
@@ -277,7 +274,7 @@ if (livestackEndpoint) {
 
     saveToLastMessages(msgObj);
 
-    interfaceServer.clients.forEach(c => {
+    messageUser.clients.forEach(c => {
       sendJSON(c, msgObj);
     });
   });

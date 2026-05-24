@@ -95,7 +95,7 @@ export default {
   data() {
     return {
       showCrosshairs: false,
-      modifyableOptions: ["captureTypeS", "FilterPosCombo", "captureExposureN", "captureCountN", "captureISOS", "captureGainN"],
+      modifiableOptions: ["captureTypeS", "FilterPosCombo", "captureExposureN", "captureCountN", "captureISOS", "captureGainN"],
     };
   },
   computed: {
@@ -128,17 +128,20 @@ export default {
     },
   },
   watch: {
-    capture(val) {
-      if (val && val.settings) {
-        Object.keys(val.settings).forEach(k => {
-          if (this.modifyableOptions.indexOf(k) !== -1
-            && this.captureSettings[k] === undefined
-            || this.captureSettings[k] === null) {
-            this.captureSettings[k] = val.settings[k];
-          }
-        });
+    capture: {
+      deep: true,
+      handler(val) {
+        if (val && val.settings) {
+          Object.keys(val.settings).forEach(k => {
+            if (this.modifiableOptions.indexOf(k) !== -1
+              && (this.captureSettings[k] === undefined
+                || this.captureSettings[k] === null)) {
+              this.captureSettings[k] = val.settings[k];
+            }
+          });
+        }
       }
-    },
+    }
   },
   mounted() {
     this.sendMsg([CAPTURE_GET_ALL_SETTINGS]);

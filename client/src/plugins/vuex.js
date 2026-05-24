@@ -18,7 +18,6 @@ import {
   FOCUS_START,
   FOCUS_STOP,
   GET_DEVICES,
-  GET_DRIVERS,
   GET_PROFILES,
   GET_STATES,
   GUIDE_CLEAR,
@@ -40,9 +39,6 @@ import {
   NEW_GUIDE_STATE,
   NEW_MOUNT_STATE,
   NEW_NOTIFICATION,
-  OPTION_SET_HIGH_BANDWIDTH,
-  OPTION_SET_IMAGE_TRANSFER,
-  OPTION_SET_NOTIFICATIONS,
   SET_CLIENT_STATE,
   START_PROFILE,
   DIALOG_GET_INFO,
@@ -50,6 +46,7 @@ import {
   DEVICE_PROPERTY_GET,
   DEVICE_PROPERTY_ADD,
   FM_GET_DATA,
+  OPTION_SET,
 } from '../util/messageTypes';
 
 
@@ -137,7 +134,8 @@ const store = createStore({
   mutations: {
     SOCKET_ONOPEN(state, event) {
       state.socket.connection = event.currentTarget;
-      state.socket.isConnected = true
+      state.socket.isConnected = true;
+      this.dispatch('sendMsg', [GET_PROFILES])
     },
     SOCKET_ONCLOSE(state) {
       state.socket.isConnected = false
@@ -193,11 +191,12 @@ const store = createStore({
       };
       if (message.payload.connected) {
         if (message.payload.online) {
-          this.dispatch("sendMsg", [GET_PROFILES]);
-          this.dispatch("sendMsg", [GET_DRIVERS]);
-          this.dispatch("sendMsg", [OPTION_SET_HIGH_BANDWIDTH, true]);
-          this.dispatch("sendMsg", [OPTION_SET_IMAGE_TRANSFER, true]);
-          this.dispatch("sendMsg", [OPTION_SET_NOTIFICATIONS, true]);
+          this.dispatch("sendMsg", [OPTION_SET, {
+            options: [
+              { name: "ekosLiveNotifications", value: true },
+              { name: "ekosLiveCloud", value: true }
+            ]
+          }]);
         } else {
           // Still connected to KStars, but Ekos was closed. Reset states to default.
 
@@ -315,7 +314,7 @@ const store = createStore({
     mountUnpark: ({ dispatch }) => {
       dispatch('sendMessage', { type: MOUNT_UNPARK });
     },
-    mountAbort: ({ dispatch }) => { dispatch('sendMessage', [MOUNT_ABORT]); },
+    mountAbort: ({ dispatch }) => { dispatch('sendMsg', [MOUNT_ABORT]); },
     mountSetTracking: ({ dispatch }, enabled) => { dispatch('sendMsg', [MOUNT_SET_TRACKING, { enabled: enabled }]); },
     guideStart: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_START]); },
     guideStop: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_STOP]); },

@@ -10,7 +10,7 @@ import 'vuetify/styles'
 
 const app = createApp(App)
 
-app.use(VueNativeSock, 'ws://' + window.location.hostname + ':3000/interface', {
+app.use(VueNativeSock, 'ws://' + window.location.hostname + ':3000/message/user', {
   reconnection: true,
   store: store,
   format: 'json',
