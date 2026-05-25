@@ -105,9 +105,6 @@ export const PAH_SLEW_DONE = 'polar_slew_done';
 export const PAH_PAH_SET_ZOOM = 'polar_set_zoom';
 export const PAH_SET_ALGORITHM = 'polar_set_algorithm';
 
-export const OPTION_SET_IMAGE_TRANSFER = 'option_set_image_transfer';
-export const OPTION_SET_NOTIFICATIONS = 'option_set_notifications';
-export const OPTION_SET_CLOUD_STORAGE = 'option_set_cloud_storage';
 export const OPTION_GET = 'option_get';
 export const OPTION_SET = 'option_set';
 
@@ -132,3 +129,15 @@ export const DIALOG_GET_RESPONSE = 'dialog_get_response';
 
 export const FM_GET_DATA = 'fm_get_data';
 export const FM_SET_DATA = 'fm_set_data';
+
+export const ASTRO_GET_ALMANC = "astro_get_almanac";
+export const ASTRO_GET_NAMES = "astro_get_names";
+export const ASTRO_GET_DESIGNATIONS = "astro_get_designations";
+export const ASTRO_GET_LOCATION = "astro_get_location";
+export const ASTRO_SEARCH_OBJECTS = "astro_search_objects";
+export const ASTRO_GET_OBJECT_INFO = "astro_get_object_info";
+export const ASTRO_GET_OBJECTS_INFO = "astro_get_objects_info";
+export const ASTRO_GET_OBJECTS_IMAGE = "astro_get_objects_image";
+export const ASTRO_GET_SKYPOINT_IMAGE = "astro_get_skypoint_image";
+export const ASTRO_GET_OBJECTS_OBSERVABILITY = "astro_get_objects_observability";
+export const ASTRO_GET_OBJECTS_RISESET = "astro_get_objects_riseset";

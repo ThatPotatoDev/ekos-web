@@ -100,7 +100,7 @@ import StopCircleLineIcon from '@iconify-vue/mingcute/stop-circle-line';
 
 import { Icon, addIcon } from '@iconify/vue';
 import { mapActions, mapGetters, mapState } from "vuex";
-import { MOUNT_SET_MOTION } from '../../../util/messageTypes';
+import { MOUNT_SET_MOTION, MOUNT_ABORT } from '../../../util/messageTypes';
 
 let debug = false;
 
@@ -113,7 +113,6 @@ export default {
   },
   data() {
     return {
-      commandInterval: new Map(),
       failsafeTimeout: null,
       pressedDirs: [],
     };
@@ -145,20 +144,11 @@ export default {
     ...mapActions([
       "sendMsg"
     ]),
-    clearCommandInterval(dir) {
-      if (this.commandInterval.get(dir) !== null) {
-        clearInterval(this.commandInterval.get(dir));
-        this.commandInterval.set(dir, null);
-      }
-    },
     sendCommand(dir) {
-      this.clearCommandInterval(dir)
       this.pressedDirs.push(dir)
-      const sendMessage = () => {
-        this.sendMsg([MOUNT_SET_MOTION, { direction: dir, action: true }]);
-      };
-      sendMessage();
-      this.commandInterval.set(dir, setInterval(sendMessage, 1000));
+      
+      if (debug) console.log("message sent", dir);
+      this.sendMsg([MOUNT_SET_MOTION, { direction: dir, action: true }]);
 
       if (this.failsafeTimeout) {
         clearTimeout(this.failsafeTimeout);
@@ -193,8 +183,6 @@ export default {
         dirsToStop.push(dir);
       }
 
-      dirsToStop.forEach(d => this.clearCommandInterval(d));
-
       if (this.failsafeTimeout) {
         clearTimeout(this.failsafeTimeout);
         this.failsafeTimeout = null;
@@ -204,10 +192,12 @@ export default {
       if (debug) console.log('stop commands sent:', dirsToStop);
       for (let i = 0; i < dirsToStop.length; i++) {
         let d = dirsToStop[i];
-        if (this.pressedDirs.indexOf(d) === -1) {
-          if (debug) console.log('No previous command to stop.');
-          continue;
-        }
+        // if (this.pressedDirs.indexOf(d) === -1) {
+        //   if (debug) console.log('No previous command to stop.');
+        //   continue;
+        // }
+        // send anyway in case motion is set by external source
+        if (dir === '') this.sendMsg([MOUNT_ABORT]); // stop button should be all powerful
         this.sendMsg([MOUNT_SET_MOTION, { direction: d, action: false }]);
         let index = this.pressedDirs.indexOf(d);
         if (index !== -1) {

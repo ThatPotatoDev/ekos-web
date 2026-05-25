@@ -47,6 +47,8 @@ import {
   DEVICE_PROPERTY_ADD,
   FM_GET_DATA,
   OPTION_SET,
+  ASTRO_GET_NAMES,
+  ASTRO_GET_DESIGNATIONS,
 } from '../util/messageTypes';
 
 
@@ -62,6 +64,7 @@ const defaultEkosStates = {
     az: null,
     de: null,
     ra: null,
+    objects: [],
   },
   guide: {
     status: "Idle"
@@ -296,6 +299,30 @@ const store = createStore({
     [FM_GET_DATA](state, message) {
       state.capture.filters = message.payload.filters.map(f => f.label);
     },
+    [ASTRO_GET_NAMES](state, message) {
+      let toRemove = [];
+      message.payload.forEach(o => {
+        toRemove.push(o.split(" (")[0])
+      });
+      state.mount.objects = message.payload.filter(o => !toRemove.includes(o));
+
+      this.dispatch("sendMsg", [ASTRO_GET_DESIGNATIONS]);
+    },
+    [ASTRO_GET_DESIGNATIONS](state, message){
+      let toAdd = new Set();
+      let toRemove = [];
+      message.payload.forEach(obj => {
+        obj.designations = obj.designations.filter(o => o !== obj.primary);
+        toAdd.add(obj.primary + ( 
+          obj.designations.length !== 0 
+            ? ` (${obj.designations.join(", ")})`
+            : ""
+        ));
+        toRemove.push(obj.primary, ...obj.designations);
+      });
+      state.mount.objects = state.mount.objects.filter(obj => !toRemove.includes(obj));
+      state.mount.objects.push(...toAdd);
+    },
     [LIVESTACK_LOG](state, message) {
       const msg = { ts: new Date(), message: message.payload }
       state.livestack.messages.push(msg);
@@ -305,6 +332,9 @@ const store = createStore({
     },
   },
   actions: {
+    search: ({ state }, query) => { //todo: move logic to wherever this will be needed
+      console.log(state.mount.objects.filter(obj => obj.toLowerCase().includes(query.toLowerCase())));
+    },
     sendMessage: ({ state }, message) => {
       state.socket.connection?.send(JSON.stringify(message));
     },

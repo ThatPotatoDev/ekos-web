@@ -60,17 +60,17 @@ export default {
     },
   },
   watch: {
-    center(nv, ov) {
+    center(newVal, oldVal) {
       if (!this.ready) return;
 
       let update = false;
-      if (!ov || ov.length != 2 || nv[0] !== ov[0] || nv[1] !== ov[1]) {
+      if (!oldVal || oldVal.length != 2 || newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1]) {
         update = true;
       }
 
-      if (update && nv.length === 2) {
+      if (update && newVal.length === 2) {
         this.Celestial.stop(true);
-        this.Celestial.rotate({ center: [...nv, 0] });
+        console.log(this.Celestial.rotate({ center: [...newVal, 0] }));
       }
     },
   },

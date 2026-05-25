@@ -27,7 +27,7 @@
   </div>
 </template>
 <script>
-import SkyMap from "@/components/SkyMap.vue";
+import SkyMap from "../SkyMap.vue";
 import MoveAxis from "./mount/MoveAxis.vue";
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapGetters, mapState } from "vuex";
