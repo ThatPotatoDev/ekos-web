@@ -299,7 +299,7 @@ const store = createStore({
     [FM_GET_DATA](state, message) {
       state.capture.filters = message.payload.filters.map(f => f.label);
     },
-    [ASTRO_GET_NAMES](state, message) {
+    [ASTRO_GET_NAMES](state, message) { //todo: req this smwh
       let toRemove = [];
       message.payload.forEach(o => {
         toRemove.push(o.split(" (")[0])
