@@ -64,7 +64,7 @@ const gpsdListener = new gpsd.Listener({
 // send new web clients our current status immediately.
 let lastMessages = {};
 const saveToLastMessages = (msg) => {
-  if (msg.payload.type === "astro_get_designations") {
+  if (typeof msg.payload.type == "string" && msg.payload.type.startsWith("astro_") && msg.payload.type != "astro_get_names") {
     
   } else if (Array.isArray(msg.payload)) {
     lastMessages[msg.type] = msg.payload;

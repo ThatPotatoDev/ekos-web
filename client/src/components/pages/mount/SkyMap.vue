@@ -55,7 +55,7 @@ export default {
         controls: false,
         form: false,
         zoomlevel: 10,
-        datapath: "https://ofrohn.github.io/data/",
+        datapath: "/celestial-data/",
       };
     },
   },

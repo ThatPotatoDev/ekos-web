@@ -7,8 +7,8 @@
             Search Objects
           </v-btn>
 
-          <v-btn style="flex: 0 0 10%;">
-            <IconifyIcon icon="refresh" />
+          <v-btn @click="refresh" style="flex: 0 0 5%; display: flex; ">
+            <IconifyIcon icon="refresh" style="display:flex; width: 1rem; height: 1rem;" />
           </v-btn>
         </div>
       </v-list-item>
@@ -59,7 +59,7 @@ import { Icon, addIcon } from "@iconify/vue";
 import { nextTick } from "vue";
 import { mapActions, mapState } from "vuex";
 import Fuse from "fuse.js";
-import { MOUNT_GOTO_TARGET } from "../../../util/messageTypes";
+import { ASTRO_GET_NAMES, MOUNT_GOTO_TARGET } from "../../../util/messageTypes";
 
 addIcon("refresh", refresh);
 
@@ -126,6 +126,9 @@ export default {
     },
     goto() {
       this.sendMsg([MOUNT_GOTO_TARGET, { target: this.target.primary } ])
+    },
+    refresh() {
+      this.sendMsg([ASTRO_GET_NAMES]);
     }
   }
 }
