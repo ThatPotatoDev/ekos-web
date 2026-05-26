@@ -98,7 +98,6 @@ import ArrowLeftCircleLineIcon from '@iconify-vue/mingcute/arrow-left-circle-lin
 import ArrowDownCircleLineIcon from '@iconify-vue/mingcute/arrow-down-circle-line';
 import StopCircleLineIcon from '@iconify-vue/mingcute/stop-circle-line';
 
-import { Icon, addIcon } from '@iconify/vue';
 import { mapActions, mapGetters, mapState } from "vuex";
 import { MOUNT_SET_MOTION, MOUNT_ABORT } from '../../../util/messageTypes';
 
@@ -109,7 +108,6 @@ export default {
     StopCircleLineIcon, 
     ArrowUpCircleLineIcon, ArrowRightCircleLineIcon,
     ArrowLeftCircleLineIcon, ArrowDownCircleLineIcon,
-    IconifyIcon: Icon,
   },
   data() {
     return {
@@ -134,7 +132,6 @@ export default {
       this.sendStop();
     }
     // Cleanup
-    this.clearCommandInterval();
     if (this.failsafeTimeout) {
       clearTimeout(this.failsafeTimeout);
       this.failsafeTimeout = null;

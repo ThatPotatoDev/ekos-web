@@ -6,7 +6,7 @@
     <SkyMap :center="mountPosition"></SkyMap>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
-    <v-list>
+    <v-list class="noBackgroundFr">
       <v-list-item>
         <v-btn block
           :disabled="this.mount.status === 'Idle' || this.mount.status === 'Tracking'"
@@ -23,11 +23,13 @@
         >{{trackingButtonText}}</v-btn>
       </v-list-item>
     </v-list>
+    <SearchObjects />
     <MoveAxis />
   </div>
 </template>
 <script>
-import SkyMap from "../SkyMap.vue";
+import SkyMap from "./mount/SkyMap.vue";
+import SearchObjects from "./mount/SearchObjects.vue";
 import MoveAxis from "./mount/MoveAxis.vue";
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapGetters, mapState } from "vuex";
@@ -35,6 +37,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 export default {
   components: {
     SkyMap,
+    SearchObjects,
     MoveAxis,
     LastNotification,
   },
@@ -43,7 +46,7 @@ export default {
       "mountPosition",
     ]),
     ...mapState([
-      'mount',
+      "mount",
     ]),
     trackingButtonText() {
       if (this.mount.status == "Idle") {

@@ -70,7 +70,7 @@ export default {
 
       if (update && newVal.length === 2) {
         this.Celestial.stop(true);
-        console.log(this.Celestial.rotate({ center: [...newVal, 0] }));
+        this.Celestial.rotate({ center: [...newVal, 0] });
       }
     },
   },

@@ -49,6 +49,9 @@ import {
   OPTION_SET,
   ASTRO_GET_NAMES,
   ASTRO_GET_DESIGNATIONS,
+  ASTRO_SEARCH_OBJECTS,
+  SKYOBJECT_PLANET,
+  SKYOBJECT_COMET,
 } from '../util/messageTypes';
 
 
@@ -64,7 +67,6 @@ const defaultEkosStates = {
     az: null,
     de: null,
     ra: null,
-    objects: [],
   },
   guide: {
     status: "Idle"
@@ -104,6 +106,9 @@ const store = createStore({
     profiles: { profiles: [], selectedProfile: "", selectedProfileObj: {} },
     sequenceQueue: [],
     captureSettings: {},
+    // gotoObjects: [],
+    gotoObjects: new Map(),
+    currObjId: 0,
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
   },
   getters: {
@@ -299,29 +304,56 @@ const store = createStore({
     [FM_GET_DATA](state, message) {
       state.capture.filters = message.payload.filters.map(f => f.label);
     },
-    [ASTRO_GET_NAMES](state, message) { //todo: req this smwh
-      let toRemove = [];
-      message.payload.forEach(o => {
-        toRemove.push(o.split(" (")[0])
-      });
-      state.mount.objects = message.payload.filter(o => !toRemove.includes(o));
+    [ASTRO_GET_NAMES](state, message) {
+      state.currObjId = 0;
 
+      const removeSet = new Set();
+
+      for (const raw of message.payload) {
+        const base = raw.split(" (")[0];
+        removeSet.add(base);
+      }
+
+      const map = new Map();
+
+      for (const raw of message.payload) {
+        if (removeSet.has(raw)) continue;
+        if (raw.toLowerCase().includes("jupiter")) console.log(raw);
+        map.set(raw, {
+          id: state.currObjId++,
+          primary: raw,
+          display: raw
+        });
+      }
+
+      state.gotoObjects = map;
+      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SKYOBJECT_PLANET, maxMagnitude: 100, minAlt: -180 } ])
+      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SKYOBJECT_COMET, maxMagnitude: 25, minAlt: 0 } ])
       this.dispatch("sendMsg", [ASTRO_GET_DESIGNATIONS]);
     },
-    [ASTRO_GET_DESIGNATIONS](state, message){
-      let toAdd = new Set();
-      let toRemove = [];
-      message.payload.forEach(obj => {
-        obj.designations = obj.designations.filter(o => o !== obj.primary);
-        toAdd.add(obj.primary + ( 
-          obj.designations.length !== 0 
-            ? ` (${obj.designations.join(", ")})`
-            : ""
-        ));
-        toRemove.push(obj.primary, ...obj.designations);
-      });
-      state.mount.objects = state.mount.objects.filter(obj => !toRemove.includes(obj));
-      state.mount.objects.push(...toAdd);
+    [ASTRO_GET_DESIGNATIONS](state, message) {
+      const map = state.gotoObjects;
+
+      for (const obj of message.payload) {
+        const primary = obj.primary;
+        const designations = obj.designations.filter(d => d !== primary);
+        const display =
+          designations.length > 0
+            ? `${primary} (${designations.join(", ")})`
+            : primary;
+
+        map.set(primary, {
+          id: state.currObjId++,
+          primary,
+          display
+        });
+      }
+    },
+    [ASTRO_SEARCH_OBJECTS](state, message) {
+      const map = state.gotoObjects;
+      for (const o of message.payload) {
+        map.set(o, { id: state.currObjId++, primary: o, display: o });
+      }
     },
     [LIVESTACK_LOG](state, message) {
       const msg = { ts: new Date(), message: message.payload }
@@ -332,8 +364,8 @@ const store = createStore({
     },
   },
   actions: {
-    search: ({ state }, query) => { //todo: move logic to wherever this will be needed
-      console.log(state.mount.objects.filter(obj => obj.toLowerCase().includes(query.toLowerCase())));
+    search: ({ state }, query) => { //todo: move logic to wherever this will be usued
+      console.log(state.gotoObjects.filter(obj => obj.display.toLowerCase().includes(query.toLowerCase())));
     },
     sendMessage: ({ state }, message) => {
       state.socket.connection?.send(JSON.stringify(message));
