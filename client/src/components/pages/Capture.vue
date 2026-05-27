@@ -14,24 +14,19 @@
     <div class="text-h6">{{ capture.status }}</div>
     <div v-if="capture.expr">
       <v-row v-if="capture.seqv !== capture.seqr" no-gutters>
-        <v-col>Exposure:</v-col>
-        <v-col>{{ capture.expv.toFixed(2) }} of {{ capture.expr }}</v-col>
+        <v-col>Exposure:</v-col>              <v-col>{{ capture.expv.toFixed(2) }} of {{ capture.expr }}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>Overall Time Remaining:</v-col>
-        <v-col>{{ capture.ovt }}</v-col>
+        <v-col>Overall Time Remaining:</v-col><v-col>{{ capture.ovt }}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>Job Time Remaining:</v-col>
-        <v-col>{{ capture.seqt }}</v-col>
+        <v-col>Job Time Remaining:</v-col>    <v-col>{{ capture.seqt }}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>Job Label:</v-col>
-        <v-col>{{ capture.seql }}</v-col>
+        <v-col>Job Label:</v-col>             <v-col>{{ capture.seql }}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>Job Exposures:</v-col>
-        <v-col>{{ capture.seqv }} of {{ capture.seqr }}</v-col>
+        <v-col>Job Exposures:</v-col>         <v-col>{{ capture.seqv }} of {{ capture.seqr }}</v-col>
       </v-row>
     </div>
     <LastNotification />

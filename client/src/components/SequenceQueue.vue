@@ -121,6 +121,7 @@ export default {
       }
     },
     clearQueue() {
+      this.selectedRow = null;
       this.sendMsg([CAPTURE_CLEAR_SEQUENCES])
     },
     loadQueue() {

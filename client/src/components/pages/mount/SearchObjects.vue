@@ -6,7 +6,6 @@
           <v-btn class="flex-grow-1" @click="openPopup">
             Search Objects
           </v-btn>
-
           <v-btn @click="refresh" style="flex: 0 0 5%; display: flex; ">
             <IconifyIcon icon="refresh" style="display:flex; width: 1rem; height: 1rem;" />
           </v-btn>

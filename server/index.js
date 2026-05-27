@@ -7,7 +7,6 @@ const static = require('node-static');
 const enableGracefulShutdown = require('server-graceful-shutdown');
 
 const debug = process.env.EKOS_WEB_DEBUG === "1";
-const livestackEndpoint = process.env.LIVESTACK_ENDPOINT;
 
 const server = http.createServer();
 
@@ -204,7 +203,8 @@ cloudServer.on("connection", (ws) => {
   // connect to the web socket.
   // In online mode, it will send the full compressed FITS files.
   ws.on("message", (msg) => {
-    console.log('received cloud message', JSON.parse(msg));
+    const metaEnd = msg.indexOf('}');
+    console.log('received cloud message', JSON.parse(Buffer.from(msg.subarray(0, metaEnd + 1))));
   });
 });
 
@@ -265,24 +265,6 @@ server.on("upgrade", (req, socket, head) => {
       socket.destroy();
   }
 });
-
-if (livestackEndpoint) {
-  const livestack = new ReconnectingWebSocket(livestackEndpoint, [], {
-    WebSocket: WebSocket,
-  });
-
-  livestack.addEventListener("error", () => { });
-
-  livestack.addEventListener("message", (msg) => {
-    const msgObj = JSON.parse(msg.data);
-
-    saveToLastMessages(msgObj);
-
-    messageUser.clients.forEach(c => {
-      sendJSON(c, msgObj);
-    });
-  });
-}
 
 enableGracefulShutdown(server, 1000);
 

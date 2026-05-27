@@ -355,10 +355,10 @@ const store = createStore({
         map.set(o, { id: state.currObjId++, primary: o, display: o });
       }
     },
-    [LIVESTACK_LOG](state, message) {
-      const msg = { ts: new Date(), message: message.payload }
-      state.livestack.messages.push(msg);
-    },
+    // [LIVESTACK_LOG](state, message) {
+    //   const msg = { ts: new Date(), message: message.payload }
+    //   state.livestack.messages.push(msg);
+    // },
     [LIVESTACK_IMAGE](state, message) {
       state.livestack.image = message.payload;
     },
