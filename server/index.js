@@ -113,20 +113,17 @@ gpsdListener.connect(() => {
   gpsdListener.watch();
 });
 
-messageUser.on("connection", (clientWs) => {
-  clientWs.on("message", (msg) => {
+messageUser.on("connection", (userWs) => {
+  userWs.on("message", (msg) => {
     // Every message we get from the client should be forwarded to Ekos.
     messageEkos.clients.forEach(c => {
       sendJSON(c, JSON.parse(msg));
     });
   });
-  messageEkos.clients.forEach(c => {
-    sendJSON(c, { type: "set_client_state", payload: { state: true } })
-  });
 
   // Update the web client with our current state.
   Object.keys(lastMessages).forEach(key => {
-    sendJSON(clientWs, { type: key, payload: lastMessages[key] });
+    sendJSON(userWs, { type: key, payload: lastMessages[key] });
   });
 
   // Tell Ekos to send us images.
@@ -136,6 +133,9 @@ messageUser.on("connection", (clientWs) => {
 });
 
 messageEkos.on("connection", (ekosWs, req) => {
+  messageUser.clients.forEach(c => {
+    sendJSON(c, { type: "ekos_connected", payload: {} });
+  });
   ekosWs.on("message", (msg) => {
     // Forward all messages to the web client, remembering the last one of
     // each type for future connections.
@@ -158,14 +158,16 @@ messageEkos.on("connection", (ekosWs, req) => {
       }
     }
   });
+
   ekosWs.on("error", (e) => {
     console.log("error", e);
   });
-
   ekosWs.on("close", () => {
     messageUser.clients.forEach(c => {
       sendJSON(c, { type: "new_connection_state", payload: { connected: false, online: false } });
     });
+    console.log("clearing messages")
+    lastMessages = {};
   });
 });
 

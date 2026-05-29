@@ -71,7 +71,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
-import { CAPTURE_ADD_SEQUENCE, CAPTURE_CLEAR_SEQUENCES, CAPTURE_GET_SEQUENCES, CAPTURE_REMOVE_SEQUENCE } from '../util/messageTypes';
+import { CAPTURE_ADD_SEQUENCE, CAPTURE_GET_SEQUENCES, CAPTURE_REMOVE_SEQUENCE } from '../util/messageTypes';
 
 export default {
   data() {
@@ -122,7 +122,9 @@ export default {
     },
     clearQueue() {
       this.selectedRow = null;
-      this.sendMsg([CAPTURE_CLEAR_SEQUENCES])
+      for (const i in this.sequenceQueue) {
+        this.sendMsg([CAPTURE_REMOVE_SEQUENCE, { index: i }]);
+      }
     },
     loadQueue() {
       console.log('Load queue')

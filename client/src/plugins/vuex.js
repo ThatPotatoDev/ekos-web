@@ -52,6 +52,7 @@ import {
   ASTRO_SEARCH_OBJECTS,
   SKYOBJECT_PLANET,
   SKYOBJECT_COMET,
+  GET_CONNECTION,
 } from '../util/messageTypes';
 
 
@@ -97,16 +98,18 @@ const store = createStore({
       message: '',
       reconnectError: false,
     },
-    connection: null,
+    connection: {
+      connected: false,
+      online: false,
+    },
     gps: {
       mode: 0,
       lat: null,
       lon: null,
     },
-    profiles: { profiles: [], selectedProfile: "", selectedProfileObj: {} },
+    profiles: { profiles: [], selectedProfile: "" },
     sequenceQueue: [],
     captureSettings: {},
-    // gotoObjects: [],
     gotoObjects: new Map(),
     currObjId: 0,
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
@@ -143,7 +146,6 @@ const store = createStore({
     SOCKET_ONOPEN(state, event) {
       state.socket.connection = event.currentTarget;
       state.socket.isConnected = true;
-      this.dispatch('sendMsg', [GET_PROFILES])
     },
     SOCKET_ONCLOSE(state) {
       state.socket.isConnected = false
@@ -198,6 +200,7 @@ const store = createStore({
         ...message.payload,
       };
       if (message.payload.connected) {
+        this.dispatch('sendMsg', [GET_PROFILES]);
         if (message.payload.online) {
           this.dispatch("sendMsg", [OPTION_SET, {
             options: [
@@ -205,6 +208,7 @@ const store = createStore({
               { name: "ekosLiveCloud", value: true }
             ]
           }]);
+          this.dispatch("sendMsg", [GET_STATES]);
         } else {
           // Still connected to KStars, but Ekos was closed. Reset states to default.
 
@@ -214,9 +218,16 @@ const store = createStore({
           state.capture.isoList = null;
           state.capture.usesGain = false;
           state.capture.filters = [];
-          this.dispatch("sendMessage", { type: GET_PROFILES });
         }
       }
+    },
+    ["ekos_connected"](state, message) {
+      this.dispatch("sendMsg", [SET_CLIENT_STATE, { state: true }]);
+      this.dispatch("sendMsg", [GET_CONNECTION]);
+    },
+    [GET_PROFILES](state, message) {
+      state.profiles = message.payload;
+      this.dispatch("findIsoOrGain");
     },
     [NEW_GUIDE_STATE](state, message) {
       state.guide = {
@@ -278,7 +289,7 @@ const store = createStore({
       }
     },
     [DEVICE_GET](state, message) {
-      if (message.payload.device === state.profiles.selectedProfileObj.ccd) {
+      if (message.payload.device === state.profiles.selectedProfileObj?.ccd) {
         let prop = message.payload.properties.find(p => p.name === "CCD_ISO");
         if (prop !== undefined) {
           state.capture.isoList = prop.switches.map(p => p.label);
@@ -291,15 +302,6 @@ const store = createStore({
       }
       const device = buildDevice(message.payload);
       state.devices[device.name] = device;
-    },
-    [GET_PROFILES](state, message) {
-      state.profiles = message.payload;
-      if (state.profiles.selectedProfileObj === undefined
-        || state.profiles.selectedProfileObj.name !== state.profiles.selectedProfile) {
-        state.profiles.selectedProfileObj = state.profiles.profiles.find(p => p.name === state.profiles.selectedProfile);
-      }
-      this.dispatch("sendMsg", [DEVICE_GET, { device: state.profiles.selectedProfileObj.ccd }]);
-      this.dispatch("sendMsg", [GET_STATES]);
     },
     [FM_GET_DATA](state, message) {
       state.capture.filters = message.payload.filters.map(f => f.label);
@@ -405,11 +407,21 @@ const store = createStore({
     },
     startProfile: ({ dispatch }, profile) => {
       dispatch('sendMsg', [START_PROFILE, { name: profile }]);
+      dispatch("findIsoOrGain");
+    },
+    findIsoOrGain: ({ dispatch }) => {
+      const profiles = store.state.profiles;
+      if (profiles.selectedProfileObj === undefined
+        || profiles.selectedProfileObj.name !== profiles.selectedProfile) {
+        store.state.profiles.selectedProfileObj = profiles.profiles.find(p => p.name === profiles.selectedProfile);
+        console.log(profiles)
+      }
+      dispatch("sendMsg", [DEVICE_GET, { device: store.state.profiles.selectedProfileObj.ccd }]);
     },
 
     sendMsg: ({ dispatch }, args) => {
       if (typeof args === 'string') {
-        throw new Error("typeof args but not be 'string'");
+        throw new Error("typeof args must not be 'string'");
       }
       const [type, payload = {}] = args;
       dispatch('sendMessage', { type: type, payload: payload });
