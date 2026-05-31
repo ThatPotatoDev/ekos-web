@@ -3,8 +3,8 @@
     <v-app-bar app>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Ekos Web</v-toolbar-title>
-      <iconify-icon icon="cloud" height="24" :class="{ greenFilledIn: connected }"></iconify-icon>
-      <iconify-icon icon="telescope" height="24" class="ml-2 mr-2" :class="{ greenFilledIn: ekosStarted }" ></iconify-icon>
+      <iconify-icon icon="cloud" height="24" :class="connected ? 'greenFilledIn' : 'redFilledIn'">></iconify-icon>
+      <iconify-icon icon="telescope" height="24" class="ml-2 mr-2" :class="ekosStarted ? 'greenFilledIn' : 'redFilledIn'"></iconify-icon>
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" app>
       <v-list dense>

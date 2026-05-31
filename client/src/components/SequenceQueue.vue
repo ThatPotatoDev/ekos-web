@@ -1,5 +1,5 @@
 <template>
-  <v-list class="noBackgroundFr">
+  <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block @click="addOrRemQueue" :disabled="!canModifyQueue()">{{addOrRemQueueText}}</v-btn>
       </v-list-item>

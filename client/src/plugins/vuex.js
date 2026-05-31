@@ -53,6 +53,7 @@ import {
   SKYOBJECT_PLANET,
   SKYOBJECT_COMET,
   GET_CONNECTION,
+  NEW_POLAR_STATE,
 } from '../util/messageTypes';
 
 
@@ -77,10 +78,15 @@ const defaultEkosStates = {
   },
   capture: {
     status: "Idle",
+    isoList: null,
+    usesGain: false,
     filters: []
   },
   align: {
     status: "Idle"
+  },
+  polar: {
+
   },
   notifications: [],
   lastNotification: null,
@@ -89,6 +95,11 @@ const defaultEkosStates = {
     messages: [],
     image: null,
   },
+  profiles: { profiles: [], selectedProfile: "" },
+  sequenceQueue: [],
+  captureSettings: {},
+  gotoObjects: new Map(),
+  currObjId: 0,
 };
 
 const store = createStore({
@@ -107,45 +118,33 @@ const store = createStore({
       lat: null,
       lon: null,
     },
-    profiles: { profiles: [], selectedProfile: "" },
-    sequenceQueue: [],
-    captureSettings: {},
-    gotoObjects: new Map(),
-    currObjId: 0,
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
   },
   getters: {
     mountPosition: state => {
-      if (state.mount.ra !== null && state.mount.de !== null) {
-        return [
-          parseFloat(state.mount.ra.toFixed(3)),
-          parseFloat(state.mount.de.toFixed(3)),
-        ];
-      }
-
-      return null;
+      if (state.mount.ra === null || state.mount.de === null) return null;
+      return [
+        parseFloat(state.mount.ra.toFixed(3)),
+        parseFloat(state.mount.de.toFixed(3)),
+      ];
     },
     gpsLocation: state => {
-      if (state.gps.lat !== null && state.gps.lon !== null) {
-        return [
-          parseFloat(state.gps.lat.toFixed(3)),
-          parseFloat(state.gps.lon.toFixed(3)),
-        ];
-      }
-      return null;
+      if (state.gps.lat === null || state.gps.lon === null) return null;
+      return [
+        parseFloat(state.gps.lat.toFixed(3)),
+        parseFloat(state.gps.lon.toFixed(3)),
+      ];
     },
     lastNotificationFormatted: state => {
-      if (state.lastNotification) {
-        return state.lastNotification.message + " " + state.lastNotification.ts.toLocaleTimeString("en-US");
-      }
-
-      return null;
+      if (!state.lastNotification) return null;
+      return state.lastNotification.message+" "+state.lastNotification.ts.toLocaleTimeString("en-US");
     }
   },
   mutations: {
     SOCKET_ONOPEN(state, event) {
       state.socket.connection = event.currentTarget;
       state.socket.isConnected = true;
+      this.dispatch("sendMsg", [GET_CONNECTION]);
     },
     SOCKET_ONCLOSE(state) {
       state.socket.isConnected = false
@@ -188,12 +187,6 @@ const store = createStore({
           state.preview.image = message.payload;
       }
     },
-    [NEW_MOUNT_STATE](state, message) {
-      state.mount = {
-        ...state.mount,
-        ...message.payload,
-      };
-    },
     [NEW_CONNECTION_STATE](state, message) {
       state.connection = {
         ...state.connection,
@@ -211,14 +204,10 @@ const store = createStore({
           this.dispatch("sendMsg", [GET_STATES]);
         } else {
           // Still connected to KStars, but Ekos was closed. Reset states to default.
-
-          Object.keys(defaultEkosStates).forEach(k => {
-            state.k = defaultEkosStates[k];
-          });
-          state.capture.isoList = null;
-          state.capture.usesGain = false;
-          state.capture.filters = [];
+          this.dispatch("reset");
         }
+      } else {
+        this.dispatch("reset");
       }
     },
     ["ekos_connected"](state, message) {
@@ -228,6 +217,12 @@ const store = createStore({
     [GET_PROFILES](state, message) {
       state.profiles = message.payload;
       this.dispatch("findIsoOrGain");
+    },
+    [NEW_MOUNT_STATE](state, message) {
+      state.mount = {
+        ...state.mount,
+        ...message.payload,
+      };
     },
     [NEW_GUIDE_STATE](state, message) {
       state.guide = {
@@ -265,15 +260,27 @@ const store = createStore({
         ...message.payload,
       };
     },
+    [NEW_POLAR_STATE](state, message) {
+      state.polar = {
+        ...state.polar,
+        ...message.payload,
+      };
+    },
     [NEW_NOTIFICATION](state, message) {
       const msg = { ts: new Date(), ...message.payload }
       state.notifications.push(msg);
       state.lastNotification = msg;
     },
+    [FM_GET_DATA](state, message) {
+      state.capture.filters = message.payload.filters.map(f => f.label);
+    },
     [CAPTURE_GET_ALL_SETTINGS](state, message) {
       state.capture.settings = {
         ...message.payload,
       };
+      if (state.capture.filters.length === 0) {
+        this.dispatch("sendMsg", [FM_GET_DATA]);
+      }
     },
     [CAPTURE_GET_SEQUENCES](state, message) {
       state.sequenceQueue = message.payload;
@@ -303,9 +310,6 @@ const store = createStore({
       const device = buildDevice(message.payload);
       state.devices[device.name] = device;
     },
-    [FM_GET_DATA](state, message) {
-      state.capture.filters = message.payload.filters.map(f => f.label);
-    },
     [ASTRO_GET_NAMES](state, message) {
       state.currObjId = 0;
 
@@ -320,7 +324,6 @@ const store = createStore({
 
       for (const raw of message.payload) {
         if (removeSet.has(raw)) continue;
-        if (raw.toLowerCase().includes("jupiter")) console.log(raw);
         map.set(raw, {
           id: state.currObjId++,
           primary: raw,
@@ -366,8 +369,10 @@ const store = createStore({
     },
   },
   actions: {
-    search: ({ state }, query) => { //todo: move logic to wherever this will be usued
-      console.log(state.gotoObjects.filter(obj => obj.display.toLowerCase().includes(query.toLowerCase())));
+    reset: ({ state }) => {
+      Object.keys(defaultEkosStates).forEach(k => {
+        store.state[k] = defaultEkosStates[k];
+      });
     },
     sendMessage: ({ state }, message) => {
       state.socket.connection?.send(JSON.stringify(message));
@@ -414,7 +419,6 @@ const store = createStore({
       if (profiles.selectedProfileObj === undefined
         || profiles.selectedProfileObj.name !== profiles.selectedProfile) {
         store.state.profiles.selectedProfileObj = profiles.profiles.find(p => p.name === profiles.selectedProfile);
-        console.log(profiles)
       }
       dispatch("sendMsg", [DEVICE_GET, { device: store.state.profiles.selectedProfileObj.ccd }]);
     },

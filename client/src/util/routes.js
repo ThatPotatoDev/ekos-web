@@ -64,7 +64,7 @@ const routes = [{
   path: "/logs",
   icon: "comment",
   component: Logs,
-},{
+},/*{
   name: "LiveStack",
   path: "/livestack",
   icon: "camera",
@@ -75,7 +75,7 @@ const routes = [{
   path: "/controlpanel",
   icon: "cogs",
   component: ControlPanel,
-}];
+}*/];
 
 export {
   Icon as IconifyIcon, routes

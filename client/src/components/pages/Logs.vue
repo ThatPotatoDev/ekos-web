@@ -4,10 +4,8 @@
     <v-divider class="mb-2"></v-divider>
     <v-list>
       <v-list-item v-for="message in messages" :key="message.uuid">
-        <v-list-item-content>
-          <v-list-item-title>{{message.message}}</v-list-item-title>
-          <v-list-item-subtitle>{{message.ts.toLocaleTimeString("en-US")}}</v-list-item-subtitle>
-        </v-list-item-content>
+        <v-list-item-title>{{ message.message }}</v-list-item-title>
+        <v-list-item-subtitle>{{ message.ts.toLocaleTimeString("en-US") }}</v-list-item-subtitle>
       </v-list-item>
     </v-list>
   </div>

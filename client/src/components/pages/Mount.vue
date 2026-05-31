@@ -6,7 +6,7 @@
     <SkyMap :center="mountPosition"></SkyMap>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
-    <v-list class="noBackgroundFr">
+    <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block
           :disabled="this.mount.status === 'Idle' || this.mount.status === 'Tracking'"

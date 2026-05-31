@@ -14,7 +14,7 @@
     </v-row>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
-    <v-list>
+    <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn @click="toggleGuiding" block>{{toggleGuidingText}}</v-btn>
       </v-list-item>

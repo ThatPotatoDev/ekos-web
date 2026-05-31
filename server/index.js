@@ -14,7 +14,7 @@ const server = http.createServer();
 const messageEkos = new WebSocket.Server({ noServer: true });
 const mediaServer = new WebSocket.Server({ noServer: true });
 const cloudServer = new WebSocket.Server({ noServer: true });
-
+const daemonServer = new WebSocket.Server({ noServer: true });
 // This one listens for messages from the web client.
 const messageUser = new WebSocket.Server({ noServer: true });
 
@@ -115,9 +115,19 @@ gpsdListener.connect(() => {
 
 messageUser.on("connection", (userWs) => {
   userWs.on("message", (msg) => {
+    const msgObj = JSON.parse(msg)
+
+    if (msgObj.type === "daemon") {
+      daemonServer.clients.forEach(c => {
+        sendJSON(c, msgObj.payload);
+        console.log(c, msgObj);
+      });
+      return;
+    }
+
     // Every message we get from the client should be forwarded to Ekos.
     messageEkos.clients.forEach(c => {
-      sendJSON(c, JSON.parse(msg));
+      sendJSON(c, msgObj);
     });
   });
 
@@ -134,7 +144,9 @@ messageUser.on("connection", (userWs) => {
 
 messageEkos.on("connection", (ekosWs, req) => {
   messageUser.clients.forEach(c => {
-    sendJSON(c, { type: "ekos_connected", payload: {} });
+    const msgObj = { type: "ekos_connected", payload: {} };
+    saveToLastMessages(msgObj);
+    sendJSON(c, msgObj);
   });
   ekosWs.on("message", (msg) => {
     // Forward all messages to the web client, remembering the last one of
@@ -159,9 +171,7 @@ messageEkos.on("connection", (ekosWs, req) => {
     }
   });
 
-  ekosWs.on("error", (e) => {
-    console.log("error", e);
-  });
+  ekosWs.on("error", console.error);
   ekosWs.on("close", () => {
     messageUser.clients.forEach(c => {
       sendJSON(c, { type: "new_connection_state", payload: { connected: false, online: false } });
@@ -179,15 +189,10 @@ mediaServer.on("connection", (ws) => {
     // structure.
 
     const metaEnd = msg.indexOf('}');
-
     let data = { type: "image_data", payload: JSON.parse(Buffer.from(msg.subarray(0, metaEnd + 1))) };
-
     let imgStart = msg.indexOf(0xff, metaEnd + 1);
-
     const raw = Buffer.from(msg.subarray(imgStart));
-
     const encoded = raw.toString('base64');
-
     data.payload['image'] = "data:image/jpeg;base64," + encoded;
 
     messageUser.clients.forEach(c => {
@@ -196,7 +201,6 @@ mediaServer.on("connection", (ws) => {
 
     saveToLastMessages(data);
   });
-
   setupMediaServerOptions(ws);
 });
 
@@ -240,8 +244,13 @@ server.on("upgrade", (req, socket, head) => {
   switch (pathname) {
     case "/message/ekos": {
       messageEkos.handleUpgrade(req, socket, head, (ws) => {
-        // console.log(req);
         messageEkos.emit("connection", ws, req);
+      });
+      break;
+    }
+    case "/message/user": {
+      messageUser.handleUpgrade(req, socket, head, (ws) => {
+        messageUser.emit("connection", ws, req);
       });
       break;
     }
@@ -257,9 +266,9 @@ server.on("upgrade", (req, socket, head) => {
       });
       break;
     }
-    case "/message/user": {
-      messageUser.handleUpgrade(req, socket, head, (ws) => {
-        messageUser.emit("connection", ws, req);
+    case "/daemon": {
+      daemonServer.handleUpgrade(req, socket, head, (ws) => {
+        daemonServer.emit("connection", ws, req);
       });
       break;
     }

@@ -1,9 +1,12 @@
 /* h1, h2, h3, h4, h5, h6, p {
     margin: 0 .25em;
 } */
-.noBackgroundFr {
+.no-v-list-background {
     background: rgb(0 0 0 / 0%) !important;
 }
 .greenFilledIn {
     color: rgb(86, 185, 91);
+}
+.redFilledIn {
+    color: rgb(244, 67, 54);
 }

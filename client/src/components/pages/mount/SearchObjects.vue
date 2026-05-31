@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-list class="noBackgroundFr">
+    <v-list class="no-v-list-background">
       <v-list-item>
         <div class="d-flex w-100 ga-2">
           <v-btn class="flex-grow-1" @click="openPopup">

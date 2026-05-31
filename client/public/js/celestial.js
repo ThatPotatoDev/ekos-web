@@ -37,7 +37,8 @@ Celestial.display = function(config) {
     if (!parseInt(st.width) && !cfg.width) parent.style.width = px(parent.parentNode.clientWidth); 
   } else { 
     parentElement = "body"; 
-    parent = null; 
+    parent = document.body;
+    // parent = null; 
   }
    
   var margin = [16, 16],

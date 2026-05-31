@@ -61,7 +61,7 @@
       />
     </v-form>
     <v-divider class="mb-2"></v-divider>
-    <v-list class="noBackgroundFr">
+    <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block @click="onPreviewClick"
           :disabled="this.capture.status !== 'Idle' && this.capture.status !== 'Complete'">Preview</v-btn>
