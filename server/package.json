@@ -1,6 +1,7 @@
 {
     "name": "ekos-web",
     "version": "0.1.0",
+    "type": "module",
     "description": "A web application for managing EKOS projects.",
     "scripts": {
         "start": "node index.js",

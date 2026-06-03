@@ -1,3 +1,4 @@
+export const DAEMON = "daemon";
 export const IMAGE_DATA = 'image_data';
 export const NEW_GPS_STATE = 'new_gps_state';
 
@@ -82,22 +83,30 @@ export const CAP_PARK = 'cap_park';
 export const CAP_UNPARK = 'cap_unpark';
 export const CAP_SET_LIGHT = 'cap_set_light';
 
-export const FOCUS_START = 'focus_start';
-export const FOCUS_STOP = 'focus_stop';
-export const FOCUS_RESET = 'focus_reset';
-export const FOCUS_IN = 'focus_in';
-export const FOCUS_OUT = 'focus_out';
-export const FOCUS_LOOP = 'focus_loop';
+export const FOCUS_START = "focus_start";
+export const FOCUS_CAPTURE = "focus_capture";
+export const FOCUS_STOP = "focus_stop";
+export const FOCUS_RESET = "focus_reset";
+export const FOCUS_IN = "focus_in";
+export const FOCUS_OUT = "focus_out";
+export const FOCUS_LOOP = "focus_loop";
+export const FOCUS_SET_ALL_SETTINGS = "focus_set_all_settings";
+export const FOCUS_GET_ALL_SETTINGS = "focus_get_all_settings";
+export const FOCUS_SET_CROSSHAIR = "focus_set_crosshair";
 
 export const GUIDE_START = 'guide_start';
 export const GUIDE_STOP = 'guide_stop';
 export const GUIDE_CLEAR = 'guide_clear';
 
-export const ALIGN_SOLVE = 'align_solve';
-export const ALIGN_STOP = 'align_stop';
-export const ALIGN_LOAD_AND_SLEW = 'align_load_and_slew';
-export const ALIGN_SET_FILE_EXTENSION = 'align_set_file_extension';
-export const ALIGN_SET_SETTINGS = 'align_set_settings';
+export const ALIGN_SOLVE = "align_solve";
+export const ALIGN_STOP = "align_stop";
+export const ALIGN_LOAD_AND_SLEW = "align_load_and_slew";
+export const ALIGN_SET_FILE_EXTENSION = "align_set_file_extension";
+export const ALIGN_SET_ALL_SETTINGS = "align_set_all_settings";
+export const ALIGN_GET_ALL_SETTINGS = "align_get_all_settings";
+export const ALIGN_SET_ASTROMETRY_SETTINGS = "align_set_astrometry_settings";
+export const ALIGN_MANUAL_ROTATOR_STATUS = "align_manual_rotator_status";
+export const ALIGN_MANUAL_ROTATOR_TOGGLE = "align_manual_rotator_toggle";
 
 export const PAH_START = 'polar_start';
 export const PAH_STOP = 'polar_stop';

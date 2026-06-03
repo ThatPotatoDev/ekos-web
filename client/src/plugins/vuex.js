@@ -54,6 +54,7 @@ import {
   SKYOBJECT_COMET,
   GET_CONNECTION,
   NEW_POLAR_STATE,
+  ALIGN_GET_ALL_SETTINGS,
 } from '../util/messageTypes';
 
 
@@ -70,6 +71,7 @@ const defaultEkosStates = {
     de: null,
     ra: null,
   },
+  slewRates: [],
   guide: {
     status: "Idle"
   },
@@ -95,10 +97,10 @@ const defaultEkosStates = {
     messages: [],
     image: null,
   },
-  profiles: { profiles: [], selectedProfile: "" },
+  profiles: { profiles: [], selectedProfile: "", selectedProfileIndex: -1},
   sequenceQueue: [],
   captureSettings: {},
-  gotoObjects: new Map(),
+  alignSettings: {},
   currObjId: 0,
 };
 
@@ -118,6 +120,7 @@ const store = createStore({
       lat: null,
       lon: null,
     },
+    gotoObjects: new Map(),
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
   },
   getters: {
@@ -216,7 +219,7 @@ const store = createStore({
     },
     [GET_PROFILES](state, message) {
       state.profiles = message.payload;
-      this.dispatch("findIsoOrGain");
+      this.dispatch("findDeviceDetails");
     },
     [NEW_MOUNT_STATE](state, message) {
       state.mount = {
@@ -274,10 +277,11 @@ const store = createStore({
     [FM_GET_DATA](state, message) {
       state.capture.filters = message.payload.filters.map(f => f.label);
     },
+    [ALIGN_GET_ALL_SETTINGS](state, message) {
+      state.align.settings = message.payload;
+    },
     [CAPTURE_GET_ALL_SETTINGS](state, message) {
-      state.capture.settings = {
-        ...message.payload,
-      };
+      state.capture.settings = message.payload;
       if (state.capture.filters.length === 0) {
         this.dispatch("sendMsg", [FM_GET_DATA]);
       }
@@ -296,7 +300,8 @@ const store = createStore({
       }
     },
     [DEVICE_GET](state, message) {
-      if (message.payload.device === state.profiles.selectedProfileObj?.ccd) {
+      const selectedProfile = state.profiles.profiles[state.profiles.selectedProfileIndex];
+      if (message.payload.device === selectedProfile?.ccd) {
         let prop = message.payload.properties.find(p => p.name === "CCD_ISO");
         if (prop !== undefined) {
           state.capture.isoList = prop.switches.map(p => p.label);
@@ -305,6 +310,13 @@ const store = createStore({
           prop = message.payload.properties.find(p => p.name === "CCD_GAIN");
           state.capture.isoList = null;
           state.capture.usesGain = true;
+        }
+      } else if (message.payload.device === selectedProfile?.mount) {
+        let prop = message.payload.properties.find(p => p.name === "TELESCOPE_SLEW_RATE");
+        if (prop !== undefined) {
+          prop.switches.forEach((v, i) => {
+            state.slewRates[i] = { label: v.label, name: v.name, index: i };
+          });
         }
       }
       const device = buildDevice(message.payload);
@@ -371,36 +383,28 @@ const store = createStore({
   actions: {
     reset: ({ state }) => {
       Object.keys(defaultEkosStates).forEach(k => {
-        store.state[k] = defaultEkosStates[k];
+        state[k] = defaultEkosStates[k];
       });
+      state.gotoObjects.clear();
     },
     sendMessage: ({ state }, message) => {
       state.socket.connection?.send(JSON.stringify(message));
     },
-    mountPark: ({ dispatch }) => {
-      dispatch('sendMessage', { type: MOUNT_PARK });
-    },
-    mountUnpark: ({ dispatch }) => {
-      dispatch('sendMessage', { type: MOUNT_UNPARK });
-    },
+    mountPark: ({ dispatch }) => { dispatch('sendMessage', { type: MOUNT_PARK }); },
+    mountUnpark: ({ dispatch }) => { dispatch('sendMessage', { type: MOUNT_UNPARK }); },
     mountAbort: ({ dispatch }) => { dispatch('sendMsg', [MOUNT_ABORT]); },
     mountSetTracking: ({ dispatch }, enabled) => { dispatch('sendMsg', [MOUNT_SET_TRACKING, { enabled: enabled }]); },
+
     guideStart: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_START]); },
     guideStop: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_STOP]); },
     guideClear: ({ dispatch }) => { dispatch('sendMsg', [GUIDE_CLEAR]); },
-
-    alignSolve: ({ dispatch }) => { dispatch('sendMsg', [ALIGN_SOLVE]); },
-    alignStop: ({ dispatch }) => { dispatch('sendMsg', [ALIGN_STOP]); },
 
     focusStop: ({ dispatch }) => { dispatch('sendMsg', [FOCUS_STOP]); },
     focusStart: ({ dispatch }) => { dispatch('sendMsg', [FOCUS_START]); },
     focusReset: ({ dispatch }) => { dispatch('sendMsg', [FOCUS_RESET]); },
 
-    captureStop: ({ dispatch }) => { dispatch('sendMsg', [CAPTURE_STOP]); },
     captureSetAllSettings: ({ dispatch }, settings) => { dispatch('sendMsg', [CAPTURE_SET_ALL_SETTINGS, settings]); },
     captureRemoveSequence: ({ dispatch }, seqIndex) => { dispatch('sendMsg', [CAPTURE_REMOVE_SEQUENCE, { index: seqIndex }]); },
-    captureStart: ({ dispatch }) => { dispatch('sendMsg', [CAPTURE_START]); },
-    capturePreview: ({ dispatch }) => { dispatch('sendMsg', [CAPTURE_PREVIEW]); },
     captureUpdateSettings: ({ dispatch }) => {
       dispatch('captureSetAllSettings', {
         ...store.state.capture.settings,
@@ -412,15 +416,17 @@ const store = createStore({
     },
     startProfile: ({ dispatch }, profile) => {
       dispatch('sendMsg', [START_PROFILE, { name: profile }]);
-      dispatch("findIsoOrGain");
+      dispatch("findDeviceDetails");
     },
-    findIsoOrGain: ({ dispatch }) => {
-      const profiles = store.state.profiles;
-      if (profiles.selectedProfileObj === undefined
-        || profiles.selectedProfileObj.name !== profiles.selectedProfile) {
-        store.state.profiles.selectedProfileObj = profiles.profiles.find(p => p.name === profiles.selectedProfile);
+    findDeviceDetails: ({ dispatch, state }) => {
+      const profiles = state.profiles;
+      if (profiles.selectedProfileIndex === -1 || profiles.profiles[profiles.selectedProfileIndex]?.name !== profiles.selectedProfile) {
+        state.profiles.selectedProfileIndex = profiles.profiles.findIndex(p => p.name === profiles.selectedProfile);
       }
-      dispatch("sendMsg", [DEVICE_GET, { device: store.state.profiles.selectedProfileObj.ccd }]);
+      //ISO or gain
+      dispatch("sendMsg", [DEVICE_GET, { device: state.profiles.profiles[state.profiles.selectedProfileIndex].ccd }]);
+
+      dispatch("sendMsg", [DEVICE_GET, { device: state.profiles.profiles[state.profiles.selectedProfileIndex].mount }]);
     },
 
     sendMsg: ({ dispatch }, args) => {

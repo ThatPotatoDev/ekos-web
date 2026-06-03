@@ -15,13 +15,11 @@
         <v-text-field v-if="target"
           v-model="target.display"
           label="Target"
-          readonly
+          hide-details readonly
         />
       </v-list-item>
       <v-list-item v-if="target">
-        <v-btn block @click="goto">
-          GOTO
-        </v-btn>
+        <v-btn block @click="goto">GOTO</v-btn>
       </v-list-item>
     </v-list>
 

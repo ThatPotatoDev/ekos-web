@@ -2,12 +2,12 @@
   <div class="pa-2">
     <div class="text-h4">Capture</div>
     <v-img class="ma-1" v-if="preview.image" :src="preview.image.image" :max-width="Math.min(preview.image.width, 800)">
-      <v-overlay absolute :value="showCrosshairs" color="rgba(0,0,0,0)">
+      <v-overlay absolute :value="this.showCrosshairs" color="rgba(0,0,0,0)">
         <v-img :src="crosshairs"></v-img>
       </v-overlay>
     </v-img>
     <v-divider class="mb-2"></v-divider>
-    <v-btn :outlined="showCrosshairs" @click.stop="showCrosshairs = !showCrosshairs">
+    <v-btn :outlined="this.showCrosshairs" @click.stop="this.showCrosshairs = !this.showCrosshairs">
       <iconify-icon icon="target" height="24" />
     </v-btn>
     <v-divider class="mb-2 mt-2"></v-divider>
@@ -36,28 +36,29 @@
         v-model="captureSettings.captureTypeS" 
         :items="['Light', 'Dark', 'Bias', 'Flat']" 
         label="Frame Type"
+
       />
       <v-select v-if="capture.filters.length !== 0"
         v-model="captureSettings.FilterPosCombo" 
         :items="capture.filters" 
         label="Filter"
       />
-      <v-text-field 
-        v-model="captureSettings.captureExposureN" 
-        label="Exposure" type="number" suffix="sec" min="0.000250"  max="3600"
+      <non-linear-number-input
+        v-model="captureSettings.captureExposureN"
+        label="Exposure (sec)"
       />
-      <v-text-field 
+      <v-number-input
         v-model="captureSettings.captureCountN" 
-        label="Count" type="number" min="1" max="100000" 
+        label="Count" :min="1" :max="100000"
       />
       <v-select v-if="capture.isoList"
         v-model="captureSettings.captureISOS" 
         :items="capture.isoList" 
         label="ISO"
       />
-      <v-text-field v-if="capture.usesGain"
+      <v-number-input v-if="capture.usesGain"
         v-model="captureSettings.captureGainN" 
-        label="Gain" type="number" min="0" 
+        label="Gain" :step="10" :min="0" :max="10000"
       />
     </v-form>
     <v-divider class="mb-2"></v-divider>
@@ -76,16 +77,17 @@
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
 import SequenceQueue from "@/components/SequenceQueue.vue"
+import NonLinearNumberInput from "../util/NonLinearNumberInput.vue";
 import { Icon } from '@iconify/vue';
 import { mapActions, mapState } from "vuex";
-import { CAPTURE_GET_ALL_SETTINGS } from "../../util/messageTypes";
-
+import { CAPTURE_GET_ALL_SETTINGS, CAPTURE_PREVIEW, CAPTURE_START, CAPTURE_STOP } from "../../util/messageTypes";
 
 export default {
   components: {
     LastNotification,
     SequenceQueue,
     IconifyIcon: Icon,
+    NonLinearNumberInput
   },
   data() {
     return {
@@ -126,11 +128,10 @@ export default {
     capture: {
       deep: true,
       handler(val) {
-        if (val && val.settings) {
+        if (val?.settings) {
           Object.keys(val.settings).forEach(k => {
             if (this.modifiableOptions.indexOf(k) !== -1
-              && (this.captureSettings[k] === undefined
-                || this.captureSettings[k] === null)) {
+              && (this.captureSettings[k] === undefined || this.captureSettings[k] === null)) {
               this.captureSettings[k] = val.settings[k];
             }
           });
@@ -146,14 +147,14 @@ export default {
     toggleCapture() {
       this.captureUpdateSettings();
       if (this.startStopText === "Start") {
-        this.captureStart();
+        this.sendMsg([CAPTURE_START]);
       } else {
-        this.captureStop();
+        this.sendMsg([CAPTURE_STOP]);
       }
     },
     onPreviewClick() {
       this.captureUpdateSettings();
-      this.capturePreview();
+      this.sendMsg([CAPTURE_PREVIEW]);
     },
   },
 };

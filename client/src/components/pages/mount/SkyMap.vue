@@ -12,7 +12,6 @@
   position: relative;
 }
 </style>
-<!-- <script src="https://ofrohn.github.io/celestial.js"></script> -->
 <script>
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -30,7 +29,7 @@ export default {
   async mounted() {
     await loadScript('/js/d3.min.js');
     await loadScript('/js/d3.geo.projection.min.js');
-    await loadScript('/js/celestial.js');
+    await loadScript('/js/celestial.js'); //https://ofrohn.github.io/celestial.js
 
     this.Celestial = Celestial;
     this.Celestial.display(this.buildConfig());
@@ -61,10 +60,11 @@ export default {
   },
   watch: {
     center(newVal, oldVal) {
+      if (!this.newVal) return;
       if (!this.ready) return;
 
       let update = false;
-      if (!oldVal || oldVal.length != 2 || newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1]) {
+      if (oldVal === null || oldVal.length != 2 || newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1]) {
         update = true;
       }
 

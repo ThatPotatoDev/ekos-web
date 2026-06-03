@@ -6,20 +6,10 @@
     <div class="text-h6">{{focus.status}}</div>
     <div v-if="focus.hfr">
       <v-row no-gutters>
-        <v-col>
-          HFR:
-        </v-col>
-        <v-col>
-          {{focus.hfr.toFixed(2)}}
-        </v-col>
+        <v-col>HFR:</v-col>      <v-col>{{focus.hfr.toFixed(2)}}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>
-          Position:
-        </v-col>
-        <v-col>
-          {{focus.pos}}
-        </v-col>
+        <v-col>Position:</v-col><v-col>{{focus.pos}}</v-col>
       </v-row>
     </div>
     <LastNotification />
@@ -35,7 +25,7 @@
   </div>
 </template>
 <script>
-import LastNotification from "@/components/common/LastNotification.vue";
+import LastNotification from "../common/LastNotification.vue";
 import { mapActions, mapState } from "vuex";
 
 export default {

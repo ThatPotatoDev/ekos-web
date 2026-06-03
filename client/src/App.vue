@@ -29,6 +29,7 @@
 <script>
 import { IconifyIcon, routes } from "@/util/routes";
 import { mapActions, mapState } from "vuex";
+import { START_PROFILE } from "./util/messageTypes";
 
 export default {
   components: {
@@ -48,9 +49,10 @@ export default {
     routes: routes,
   }),
   methods: {
-    ...mapActions(["startProfile"]),
+    ...mapActions(["sendMsg", "findDeviceDetails"]),
     startProfileClicked() {
-      this.startProfile(this.profiles.selectedProfile);
+      this.sendMsg([START_PROFILE, {name: this.profiles.selectedProfile} ])
+      this.findDeviceDetails();
     }
   }
 };

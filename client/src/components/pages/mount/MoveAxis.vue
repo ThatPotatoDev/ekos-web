@@ -86,9 +86,13 @@
         />
       </button>
     </div>
-    <div class="control-panel">
-      <!-- <SetSlewRate /> -->
-    </div>
+    <v-select
+      v-model="slewRate"
+      :items="slewRates"
+      label="Slew rate"
+      :item-title="(item) => item.label != item.name ? `${item.label} (${item.name})` : item.label"
+      item-value="index"
+    ></v-select>
   </div>
 </template>
 <script>
@@ -99,7 +103,7 @@ import ArrowDownCircleLineIcon from '@iconify-vue/mingcute/arrow-down-circle-lin
 import StopCircleLineIcon from '@iconify-vue/mingcute/stop-circle-line';
 
 import { mapActions, mapGetters, mapState } from "vuex";
-import { MOUNT_SET_MOTION, MOUNT_ABORT } from '../../../util/messageTypes';
+import { MOUNT_SET_MOTION, MOUNT_ABORT, MOUNT_SET_SLEW_RATE } from '../../../util/messageTypes';
 
 let debug = false;
 
@@ -113,9 +117,31 @@ export default {
     return {
       failsafeTimeout: null,
       pressedDirs: [],
+      slewRate: null
     };
   },
+  computed: {
+    ...mapState([
+      "mount",
+      "slewRates"
+    ]),
+    ...mapState({
+      mountSlewRate: state => state.mount.slewRate
+    })
+  },
+  watch: {
+    mountSlewRate(v) {
+      if (this.slewRate !== null || v === null) {
+        console.log(this.slewRate, v);
+        return;
+      }
+      this.slewRate = v;
+    }
+  },
   mounted() {
+    if (this.mountSlewRate !== null && this.slewRate === null) {
+      this.slewRate = this.mountSlewRate;
+    }
     const handleGlobalStop = () => {
       if (this.pressedDirs.length !== 0) {
         console.log('Global emergency stop triggered');
@@ -145,6 +171,7 @@ export default {
       this.pressedDirs.push(dir)
       
       if (debug) console.log("message sent", dir);
+      if (this.mountSlewRate != this.slewRate) this.sendMsg([MOUNT_SET_SLEW_RATE, { rate: this.slewRate }])
       this.sendMsg([MOUNT_SET_MOTION, { direction: dir, action: true }]);
 
       if (this.failsafeTimeout) {
@@ -261,22 +288,6 @@ export default {
 .move-axis-icon {
   width: 3rem;
   height: 3rem;
-}
-
-.control-panel {
-  display: flex;
-  flex-direction: column;
-
-  width: 100%;
-
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  gap: 0.5rem;
-
-  border: 1px solid #d1d5db;
-  border-radius: 1rem;
-
-  background: rgba(17, 24, 39, 0.8);
 }
 
 .glowGreen {

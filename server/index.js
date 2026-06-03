@@ -1,10 +1,11 @@
-const http = require('http');
-const WebSocket = require('ws');
-const ReconnectingWebSocket = require('reconnecting-websocket');
-const url = require('url');
-const gpsd = require('node-gpsd');
-const static = require('node-static');
-const enableGracefulShutdown = require('server-graceful-shutdown');
+import http from 'http';
+import WebSocket from 'ws';
+import ReconnectingWebSocket from 'reconnecting-websocket';
+import url from 'url';
+import nodeGpsd from 'node-gpsd';
+import nodeStatic from 'node-static';
+import enableGracefulShutdown from 'server-graceful-shutdown';
+import { handleDaemonMsg } from './daemon.js';
 
 const debug = process.env.EKOS_WEB_DEBUG === "1";
 
@@ -14,7 +15,6 @@ const server = http.createServer();
 const messageEkos = new WebSocket.Server({ noServer: true });
 const mediaServer = new WebSocket.Server({ noServer: true });
 const cloudServer = new WebSocket.Server({ noServer: true });
-const daemonServer = new WebSocket.Server({ noServer: true });
 // This one listens for messages from the web client.
 const messageUser = new WebSocket.Server({ noServer: true });
 
@@ -49,7 +49,7 @@ Object.keys(signals).forEach((signal) => {
   });
 });
 
-const gpsdListener = new gpsd.Listener({
+const gpsdListener = new nodeGpsd.Listener({
   hostname: process.env.GPSD_HOST || "127.0.0.1",
   parse: true,
   logger: {
@@ -61,19 +61,19 @@ const gpsdListener = new gpsd.Listener({
 
 // Keep track of the last messages of each type (merging them together) so we can
 // send new web clients our current status immediately.
-let lastMessages = {};
+const lastMessages = new Map();
 const saveToLastMessages = (msg) => {
   if (typeof msg.payload.type == "string" && msg.payload.type.startsWith("astro_") && msg.payload.type != "astro_get_names") {
     
   } else if (Array.isArray(msg.payload)) {
-    lastMessages[msg.type] = msg.payload;
+    lastMessages.set(msg.type, msg.payload);
   } else if (typeof msg.payload === "object") {
-    lastMessages[msg.type] = {
-      ...lastMessages[msg.type],
+    lastMessages.set(msg.type, {
+      ...lastMessages.get(msg.type),
       ...msg.payload,
-    };
+    });
   } else {
-    lastMessages[msg.type] = msg.payload;
+    lastMessages.set(msg.type, msg.payload);
   }
 };
 
@@ -81,7 +81,6 @@ const sendJSON = (ws, msg) => {
   if (debug) {
     console.log('sending message', msg);
   }
-
   ws.send(JSON.stringify(msg));
 };
 
@@ -108,7 +107,6 @@ gpsdListener.on('TPV', (loc) => {
 });
 
 gpsdListener.on("error", () => { });
-
 gpsdListener.connect(() => {
   gpsdListener.watch();
 });
@@ -118,10 +116,7 @@ messageUser.on("connection", (userWs) => {
     const msgObj = JSON.parse(msg)
 
     if (msgObj.type === "daemon") {
-      daemonServer.clients.forEach(c => {
-        sendJSON(c, msgObj.payload);
-        console.log(c, msgObj);
-      });
+      handleDaemonMsg(msgObj.payload);
       return;
     }
 
@@ -132,9 +127,10 @@ messageUser.on("connection", (userWs) => {
   });
 
   // Update the web client with our current state.
-  Object.keys(lastMessages).forEach(key => {
-    sendJSON(userWs, { type: key, payload: lastMessages[key] });
+  lastMessages.forEach((val, key) => {
+    sendJSON(userWs, { type: key, payload: val });
   });
+  lastMessages.delete("ekos_connected");
 
   // Tell Ekos to send us images.
   mediaServer.clients.forEach(c => {
@@ -143,9 +139,11 @@ messageUser.on("connection", (userWs) => {
 });
 
 messageEkos.on("connection", (ekosWs, req) => {
+  if (messageUser.clients.length === 0) {
+    saveToLastMessages(msgObj);
+  }
   messageUser.clients.forEach(c => {
     const msgObj = { type: "ekos_connected", payload: {} };
-    saveToLastMessages(msgObj);
     sendJSON(c, msgObj);
   });
   ekosWs.on("message", (msg) => {
@@ -166,7 +164,7 @@ messageEkos.on("connection", (ekosWs, req) => {
         });
       } else {
         console.log("clearing messages")
-        lastMessages = {};
+        lastMessages.clear();
       }
     }
   });
@@ -177,7 +175,7 @@ messageEkos.on("connection", (ekosWs, req) => {
       sendJSON(c, { type: "new_connection_state", payload: { connected: false, online: false } });
     });
     console.log("clearing messages")
-    lastMessages = {};
+    lastMessages.clear();
   });
 });
 
@@ -214,7 +212,7 @@ cloudServer.on("connection", (ws) => {
   });
 });
 
-var file = new static.Server("./static");
+var file = new nodeStatic.Server("./static");
 
 server.addListener("request", (req, res) => {
   console.log('request started', req.url);
@@ -263,12 +261,6 @@ server.on("upgrade", (req, socket, head) => {
     case "/media/ekos": {
       mediaServer.handleUpgrade(req, socket, head, (ws) => {
         mediaServer.emit("connection", ws, req);
-      });
-      break;
-    }
-    case "/daemon": {
-      daemonServer.handleUpgrade(req, socket, head, (ws) => {
-        daemonServer.emit("connection", ws, req);
       });
       break;
     }
