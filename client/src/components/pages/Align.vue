@@ -21,7 +21,7 @@
         <v-col>FOV:</v-col>           <v-col>{{align.solution.fov}}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>Rotation:</v-col>      <v-col>{{align.solution.rot.toFixed(1)}}&deg;</v-col>
+        <v-col>Rotation:</v-col>      <v-col>{{align.solution.PA.toFixed(1)}}&deg;</v-col>
       </v-row>
       <v-row no-gutters>
         <v-col>ArcSec / Pixel:</v-col><v-col>{{align.solution.pix.toFixed(2)}}"</v-col>

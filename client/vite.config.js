@@ -13,7 +13,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Proxy backend requests to your Node.js server
       '/api': 'http://localhost:3000',
     },
   },
