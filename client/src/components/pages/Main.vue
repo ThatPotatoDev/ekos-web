@@ -82,7 +82,7 @@ export default {
       return "";
     },
     dec() {
-      if (this.mount.de) return dms(this.mount.de);
+      if (this.mount.de) return dms(this.mount.de, true);
       return "";
     },
     gpsMode() {

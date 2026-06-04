@@ -21,8 +21,8 @@ const hms = (dec) => {
   );
 };
 
-const dms = (dec) => {
-  const negative = dec < 0.0 ? "-" : "";
+const dms = (dec, extra = false) => {
+  const negative = dec < 0.0 ? "-" : "+";
 
   const d = Math.floor(Math.abs(dec));
   const m = Math.floor(60 * (Math.abs(dec) - d));
@@ -35,9 +35,7 @@ const dms = (dec) => {
     m.toString() +
     "' " +
     s.toFixed(2) +
-    '" (' +
-    dec.toFixed(3) +
-    "°)"
+    (extra ? `" (${dec.toFixed(3)}°)` : "")
   );
 };
 

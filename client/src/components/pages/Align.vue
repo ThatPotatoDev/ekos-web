@@ -6,10 +6,10 @@
     <div class="text-h6">{{align.status}}</div>
     <div v-if="align.solution">
       <v-row no-gutters>
-        <v-col>&Delta; RA:</v-col>    <v-col>{{align.solution.dRA}}</v-col>
+        <v-col>&Delta; RA:</v-col>    <v-col>{{hms(align.solution.dRA)}}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>&Delta; Dec:</v-col>   <v-col>{{align.solution.dDE}}</v-col>
+        <v-col>&Delta; Dec:</v-col>   <v-col>{{dms(align.solution.dDE)}}</v-col>
       </v-row>
       <v-row no-gutters>
         <v-col>RA:</v-col>            <v-col>{{align.solution.ra}}</v-col>
@@ -37,58 +37,82 @@
     <v-divider class="mb-2"></v-divider>
     <div class="text-h5">Polar Alignment</div>
     <v-divider class="ma-2"></v-divider>
+    <div class="text-h6">{{polar.stage}}</div>
+
     <div v-if="polar.vector">
-      <v-row no-gutters>
-        <v-col>Center X:</v-col>      <v-col>{{polar.vector.center_x}}</v-col>
+      Measured:
+      <v-row no-gutters v-if="polar.vector">
+        <v-col>Err: {{dms(polar.vector.error)}}</v-col>
+        <v-col>Alt: {{dms(polar.vector.altError)}}</v-col>
+        <v-col>Az: {{dms(polar.vector.azError)}}</v-col>
       </v-row>
-      <v-row no-gutters>
-        <v-col>Center Y:</v-col>      <v-col>{{polar.vector.center_y}}</v-col>
+      Updated:
+      <v-row no-gutters v-if="polar.updatedError">
+        <v-col>Err: {{dms(polar.updatedError)}}</v-col>
+        <v-col>Alt: {{dms(polar.updatedALTError)}}</v-col>
+        <v-col>Az: {{dms(polar.updatedAZError)}}</v-col>
       </v-row>
-      <v-row no-gutters>
-        <v-col>Mag:</v-col>           <v-col>{{polar.vector.mag}}</v-col>
+      <v-row no-gutters v-if="polar.vector || polar.updatedError">
+        <v-col></v-col><!-- TODO: arrows -->
+        <v-col></v-col>
+        <v-col></v-col>
       </v-row>
-      <v-row no-gutters>
-        <v-col>Pa:</v-col>            <v-col>{{polar.vector.pa}}</v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col>Error:</v-col>         <v-col>{{polar.updatedError ?? polar.vector.error}}</v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col>Azimuth Error:</v-col> <v-col>{{polar.updatedAZError ?? polar.vector.azError}}&deg;</v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col>Altitude Error:</v-col><v-col>{{polar.updatedAZError ?? polar.vector.altError}}"</v-col>
+      
+      <v-divider class="mb-3 ma-2"></v-divider>
+    </div>
+    <div v-if="polar.stage === 'Idle'">
+      <v-select 
+        v-model="settings.pAHDirection" 
+        :items="['East', 'West']" 
+        label="Direction"
+      />
+      <v-number-input
+        v-model="settings.pAHRotation" 
+        label="Rotation magnitude (&deg;)" :step="15" :min="15" :max="60"
+      />
+      <v-row>
+        <v-col>
+        <v-select
+          v-model="settings.pAHMountSpeed"
+          :items="slewRates"
+          label="Speed"
+          :item-title="(item) => `${item.label} (${item.name})`"
+          item-value="label"
+        ></v-select>
+        </v-col>
+        <v-col><v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" /></v-col>
       </v-row>
     </div>
-    <v-select 
-      v-model="settings.pAHDirection" 
-      :items="['East', 'West']" 
-      label="Direction"
-    />
-    <v-number-input
-      v-model="settings.pAHRotation" 
-      label="Rotation magnitude (&deg;)" :step="15" :min="15" :max="60"
-    />
-    <v-select
-      v-model="settings.pAHMountSpeed"
-      :items="slewRates"
-      label="Speed"
-      :item-title="(item) => `${item.label} (${item.name})`"
-      item-value="label"
-      hide-details
-    ></v-select>
-    <v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" hide-details></v-checkbox>
+    <div v-else-if="polar.stage === 'Select Star'">
+      <v-number-input
+        v-model="settings.pAHExposure" 
+        label="Refresh Exposure" :min="1" :max="10"
+      />
+      <v-select 
+        v-model="settings.pAHRefreshAlgorithm" 
+        :items="['Plate Solve','Move Star','Move Star & Calc Error']"
+        label="Direction"
+      />
+      <v-list class="no-v-list-background">
+        <v-list-item>
+          <v-btn block @click="onClickPARefresh">Refresh</v-btn>
+        </v-list-item>
+      </v-list>
+    </div>
     <v-list class="no-v-list-background">
       <v-list-item>
-        <v-btn block @click="onClickPA">{{textPA}}</v-btn>
+        <v-btn block @click="onClickPA">{{ textPA }}</v-btn>
       </v-list-item>
     </v-list>
   </div>
 </template>
+<script setup>
+import { hms, dms } from "../../util/coords";
+</script>
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapState } from "vuex";
-import { ALIGN_GET_ALL_SETTINGS, ALIGN_SET_ALL_SETTINGS, ALIGN_SOLVE, ALIGN_STOP, PAH_START, PAH_STOP } from "../../util/messageTypes";
+import { ALIGN_GET_ALL_SETTINGS, ALIGN_SET_ALL_SETTINGS, ALIGN_SOLVE, ALIGN_STOP, PAH_REFRESH, PAH_START, PAH_STOP } from "../../util/messageTypes";
 
 export default {
   components: {
@@ -96,7 +120,7 @@ export default {
   },
   data() {
     return {
-      modifiableOptions: ["pAHDirection", "pAHRotation", "pAHMountSpeed", "pAHManualSlew"],
+      modifiableOptions: ["pAHDirection", "pAHRotation", "pAHMountSpeed", "pAHManualSlew", "pAHExposure", "pAHRefreshAlgorithm"],
     };
   },
   computed: {
@@ -109,7 +133,10 @@ export default {
       settings: state => state.alignSettings
     }),
     alignText() {
-      if (this.align.status === 'Idle' || this.align.status === 'Failed' || this.align.status === 'Complete' || this.align.status === 'Aborted') {
+      if (this.align.status === 'Idle' || this.align.status === 'Failed'
+        || this.align.status === 'Complete' || this.align.status === 'Aborted'
+        || this.align.status === 'Successful'
+      ) {
         return "Solve";
       }
       return "Stop";
@@ -163,6 +190,10 @@ export default {
       } else {
         this.sendMsg([PAH_STOP]);
       }
+    },
+    onClickPARefresh() {
+      this.updateSettings();
+      this.sendMsg([PAH_REFRESH, { value: this.settings.pAHExposure }])
     }
   }
 };
