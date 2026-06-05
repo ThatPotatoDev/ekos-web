@@ -9,82 +9,59 @@ import Mount from '@/components/pages/Mount.vue'
 import ControlPanel from '@/components/pages/ControlPanel.vue'
 import Settings from '@/components/pages/Settings.vue'
 
-import home from "@iconify/icons-mdi/home";
-import camera from "@iconify/icons-mdi/camera";
-import telescope from "@iconify/icons-mdi/telescope";
-import target from "@iconify/icons-mdi/target";
-import compass from "@iconify/icons-mdi/compass";
-import magnify from "@iconify/icons-mdi/magnify";
-import comment from "@iconify/icons-mdi/comment";
-import cloud from "@iconify/icons-mdi/cloud";
-import cogs from "@iconify/icons-mdi/cogs";
-import cog from "@iconify/icons-mdi/cog";
-import { Icon, addIcon } from "@iconify/vue";
-
-addIcon("home", home);
-addIcon("camera", camera);
-addIcon("telescope", telescope);
-addIcon("target", target);
-addIcon("compass", compass);
-addIcon("magnify", magnify);
-addIcon("comment", comment);
-addIcon("cloud", cloud);
-addIcon("cogs", cogs);
-addIcon("cog", cog);
-
 const routes = [{
   name: "Main",
   path: "/",
-  icon: "home",
+  icon: "mdi-home",
   component: Main,
 },{
   name: "Capture",
   path: "/capture",
-  icon: "camera",
+  icon: "mdi-camera",
   component: Capture,
 },{
   name: "Mount",
   path: "/mount",
-  icon: "telescope",
+  icon: "mdi-telescope",
   component: Mount,
 },{
   name: "Align",
   path: "/align",
-  icon: "target",
+  icon: "mdi-target",
   component: Align,
 },{
   name: "Guide",
   path: "/guide",
-  icon: "compass",
+  icon: "mdi-compass",
   component: Guide,
 },{
   name: "Focus",
   path: "/focus",
-  icon: "magnify",
+  icon: "mdi-magnify",
   component: Focus,
 },{
   name: "Logs",
   path: "/logs",
-  icon: "comment",
+  icon: "mdi-comment",
   component: Logs,
 },/*{
   name: "LiveStack",
   path: "/livestack",
-  icon: "camera",
+  icon: "mdi-camera",
   component: LiveStack,
-},{
+},*/{
   name: "ControlPanel",
   label: "Control Panel",
   path: "/controlpanel",
-  icon: "cogs",
+  icon: "mdi-cogs",
   component: ControlPanel,
-},*/{
+},{
   name: "Settings",
   path: "/settings",
-  icon: "cog",
+  icon: "mdi-cog",
   component: Settings,
 },];
 
 export {
-  Icon as IconifyIcon, routes
+  routes
 }

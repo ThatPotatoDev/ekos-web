@@ -7,7 +7,7 @@
             Search Objects
           </v-btn>
           <v-btn @click="refresh" style="flex: 0 0 5%; display: flex; ">
-            <IconifyIcon icon="refresh" style="display:flex; width: 1rem; height: 1rem;" />
+            <v-icon icon="mdi-refresh" style="display:flex; width: 1rem; height: 1rem;" />
           </v-btn>
         </div>
       </v-list-item>
@@ -52,18 +52,12 @@
 </template>
 <script>
 import refresh from "@iconify/icons-mdi/refresh"
-import { Icon, addIcon } from "@iconify/vue";
 import { nextTick } from "vue";
 import { mapActions, mapState } from "vuex";
 import Fuse from "fuse.js";
 import { ASTRO_GET_NAMES, MOUNT_GOTO_TARGET } from "../../../util/messageTypes";
 
-addIcon("refresh", refresh);
-
 export default {
-  components: {
-    IconifyIcon: Icon,
-  },
   data() {
     return {
       open: false,

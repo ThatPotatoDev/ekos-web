@@ -3,7 +3,7 @@ function h2g(ra) {
 }
 
 const hms = (dec) => {
-  const H = dec != 0 ? dec / 15 : 0;
+  const H = dec / 15;
 
   const h = Math.floor(H);
   const m = Math.floor(60 * (Math.abs(H) - h));
@@ -15,10 +15,17 @@ const hms = (dec) => {
     m.toString() +
     "m " +
     s.toFixed(2) +
-    "s (" +
-    H.toFixed(3) +
-    "h)"
+    (`s (${H.toFixed(3)}h)`)
   );
+};
+
+const hmsFromH = (decimalH) => {
+  const h = Math.floor(decimalH);
+  const decimalM = (decimalH - h) * 60;
+  const m = Math.floor(decimalM);
+  const s = ((decimalM - m) * 60).toFixed(2);
+
+  return (`${h.toString()}h ${m.toString()}m ${s.toString()}s`);
 };
 
 const dms = (dec, extra = false) => {
@@ -42,5 +49,6 @@ const dms = (dec, extra = false) => {
 export {
   h2g,
   hms,
+  hmsFromH,
   dms,
 };

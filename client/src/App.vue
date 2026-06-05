@@ -3,38 +3,34 @@
     <v-app-bar app>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Ekos Web</v-toolbar-title>
-      <iconify-icon icon="cloud" height="24" :class="connected ? 'greenFilledIn' : 'redFilledIn'">></iconify-icon>
-      <iconify-icon icon="telescope" height="24" class="ml-2 mr-2" :class="ekosStarted ? 'greenFilledIn' : 'redFilledIn'"></iconify-icon>
+      <v-icon icon="mdi-cloud" height="24" :class="connected ? 'greenFilledIn' : 'redFilledIn'"/>
+      <v-icon icon="mdi-telescope" height="24" class="ml-2 mr-2" :class="ekosStarted ? 'greenFilledIn' : 'redFilledIn'"/>
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" app>
       <v-list dense>
         <v-list-item link exact :to="{name: r.name}" v-for="r in routes" :key="r.name">
           <v-list-item-action>
-            <iconify-icon :icon="r.icon" height="24"></iconify-icon>
+            <v-icon :icon="r.icon" height="24" />
           </v-list-item-action>
           <v-list-item-title>{{r.label || r.name}}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-main>
-      <div v-if="!ekosStarted" class="pa-2">
+      <router-view v-if="ekosStarted || $route.path === '/settings'"></router-view>
+      <div v-else class="pa-2">
         <v-select v-model="profiles.selectedProfile" :items="profiles.profiles.map(p => p.name)" label="Profile" item-text="name" item-value="name" />
         <v-btn @click.stop="startProfileClicked">Start Profile</v-btn>
       </div>
-      <router-view v-if="ekosStarted"></router-view>
     </v-main>
   </v-app>
 </template>
-
 <script>
-import { IconifyIcon, routes } from "@/util/routes";
+import { routes } from "@/util/routes";
 import { mapActions, mapState } from "vuex";
 import { START_PROFILE } from "./util/messageTypes";
 
 export default {
-  components: {
-    IconifyIcon,
-  },
   computed: {
     ...mapState(["connection", "profiles"]),
     connected() {

@@ -8,7 +8,7 @@
     </v-img>
     <v-divider class="mb-2"></v-divider>
     <v-btn :outlined="this.showCrosshairs" @click.stop="this.showCrosshairs = !this.showCrosshairs">
-      <iconify-icon icon="target" height="24" />
+      <v-icon icon="mdi-target" height="24" />
     </v-btn>
     <v-divider class="mb-2 mt-2"></v-divider>
     <div class="text-h6">{{ capture.status }}</div>
@@ -31,41 +31,64 @@
     </div>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
-    <v-form class="ma-1">
-      <v-select 
-        v-model="captureSettings.captureTypeS" 
-        :items="['Light', 'Dark', 'Bias', 'Flat']" 
-        label="Frame Type"
-
-      />
-      <v-select v-if="capture.filters.length !== 0"
-        v-model="captureSettings.FilterPosCombo" 
-        :items="capture.filters" 
-        label="Filter"
-      />
-      <non-linear-number-input
-        v-model="captureSettings.captureExposureN"
-        label="Exposure (sec)"
-      />
-      <v-number-input
-        v-model="captureSettings.captureCountN" 
-        label="Count" :min="1" :max="100000"
-      />
-      <v-select v-if="capture.isoList"
-        v-model="captureSettings.captureISOS" 
-        :items="capture.isoList" 
-        label="ISO"
-      />
-      <v-number-input v-if="capture.usesGain"
-        v-model="captureSettings.captureGainN" 
-        label="Gain" :step="10" :min="0" :max="10000"
-      />
+    <!-- TODO: see if rules are necessary  -->
+    <v-form class="ma-1" validate-on="blur">
+      <v-row dense>
+        <v-col>
+          <v-select 
+            v-model="captureSettings.captureTypeS" 
+            :items="['Light', 'Dark', 'Bias', 'Flat']" 
+            label="Frame Type" hide-details
+          />
+        </v-col>
+        <v-col>
+          <v-select 
+            v-model="captureSettings.captureEncodingS" 
+            :items="deviceInfo.ccd.transferFormats" 
+            label="File Format" hide-details
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col>
+          <v-number-input
+            v-model="captureSettings.captureCountN" 
+            label="Count" :min="1" :max="100000" hide-details
+          />
+        </v-col>
+        <v-col v-if="deviceInfo.ccd.filters.length !== 0">
+          <v-select
+            v-model="captureSettings.FilterPosCombo" 
+            :items="deviceInfo.ccd.filters" 
+            label="Filter" hide-details
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col>
+          <non-linear-number-input
+          v-model="captureSettings.captureExposureN"
+          label="Exposure (sec)" :rules="[val => {if (val > 0) return true; return 'Exposure must be > 0'}]"
+        />
+        </v-col>
+        <v-col>
+          <v-select v-if="deviceInfo.ccd.isoList != null"
+            v-model="captureSettings.captureISOS" 
+            :items="capture.isoList" 
+            label="ISO"
+          />
+          <v-number-input v-else-if="deviceInfo.ccd.usesGain"
+            v-model="captureSettings.captureGainN" :rules="[val => {if (val >= 1) return true; return 'Gain must be >= 1'}]"
+            label="Gain" :step="50" :min="1" :max="10000"
+          />
+        </v-col>
+      </v-row>
     </v-form>
     <v-divider class="mb-2"></v-divider>
     <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block @click="onPreviewClick"
-          :disabled="this.capture.status !== 'Idle' && this.capture.status !== 'Complete'">Preview</v-btn>
+          :disabled="this.startStopText !== 'Start'">Preview</v-btn>
       </v-list-item>
       <v-list-item>
         <v-btn block @click="toggleCapture">{{ startStopText }}</v-btn>
@@ -78,7 +101,6 @@
 import LastNotification from "@/components/common/LastNotification.vue";
 import SequenceQueue from "@/components/SequenceQueue.vue"
 import NonLinearNumberInput from "../util/NonLinearNumberInput.vue";
-import { Icon } from '@iconify/vue';
 import { mapActions, mapState } from "vuex";
 import { CAPTURE_GET_ALL_SETTINGS, CAPTURE_PREVIEW, CAPTURE_START, CAPTURE_STOP } from "../../util/messageTypes";
 
@@ -86,25 +108,29 @@ export default {
   components: {
     LastNotification,
     SequenceQueue,
-    IconifyIcon: Icon,
     NonLinearNumberInput
   },
-  data() {
-    return {
-      showCrosshairs: false,
-      modifiableOptions: ["captureTypeS", "FilterPosCombo", "captureExposureN", "captureCountN", "captureISOS", "captureGainN"],
-    };
-  },
+  data: () => ({
+    showCrosshairs: false,
+    modifiableOptions: [
+      "captureTypeS", "FilterPosCombo",
+      "captureExposureN", "captureCountN",
+      "captureISOS", "captureGainN",
+      "captureEncodingS"
+    ],
+  }),
   computed: {
     ...mapState([
       "capture",
       "preview",
-      "captureSettings"
+      "captureSettings",
+      "deviceInfo"
     ]),
     startStopText() {
       if (
-        this.capture.status === "Idle" ||
-        this.capture.status === "Complete"
+        this.capture.status === "Idle"
+        || this.capture.status === "Complete"
+        || this.capture.status === "Aborted"
       ) {
         return "Start";
       }

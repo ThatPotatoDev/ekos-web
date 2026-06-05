@@ -88,7 +88,7 @@
     </div>
     <v-select
       v-model="slewRate"
-      :items="slewRates"
+      :items="deviceInfo.mount.slewRates"
       label="Slew rate"
       :item-title="(item) => item.label != item.name ? `${item.label} (${item.name})` : item.label"
       item-value="index"
@@ -123,7 +123,7 @@ export default {
   computed: {
     ...mapState([
       "mount",
-      "slewRates"
+      "deviceInfo"
     ]),
     ...mapState({
       mountSlewRate: state => state.mount.slewRate

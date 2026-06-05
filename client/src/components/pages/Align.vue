@@ -6,16 +6,10 @@
     <div class="text-h6">{{align.status}}</div>
     <div v-if="align.solution">
       <v-row no-gutters>
-        <v-col>&Delta; RA:</v-col>    <v-col>{{hms(align.solution.dRA)}}</v-col>
+        <v-col>RA:</v-col>            <v-col>{{hmsFromH(align.solution['ra.Hours'])}}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>&Delta; Dec:</v-col>   <v-col>{{dms(align.solution.dDE)}}</v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col>RA:</v-col>            <v-col>{{align.solution.ra}}</v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col>Dec:</v-col>           <v-col>{{align.solution.de}}</v-col>
+        <v-col>Dec:</v-col>           <v-col>{{dms(align.solution['de.Degrees'])}}</v-col>
       </v-row>
       <v-row no-gutters>
         <v-col>FOV:</v-col>           <v-col>{{align.solution.fov}}</v-col>
@@ -29,9 +23,53 @@
     </div>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
+    <v-radio-group label="Solver Action" v-model="settings.$solverAction">
+      <v-radio label="Sync" value="syncR" />
+      <v-radio label="Slew to Target" value="slewR" />
+      <v-radio label="Nothing" value="nothingR" />
+    </v-radio-group>
+    <v-row dense>
+      <v-col>
+        <v-number-input
+          v-model="settings.alignAccuracyThreshold"
+          label="Accuracy" :step="10" :min="1" :max="1200"
+        />
+      </v-col>
+      <v-col>
+        <v-number-input
+          v-model="settings.alignSettlingTime"
+          label="Settle" :step="100" :min="0" :max="15000"
+        />
+      </v-col>
+    </v-row>
+    <v-expansion-panels>
+     <v-expansion-panel title="Capture Options">
+      <v-expansion-panel-text>
+        <v-row dense>
+          <v-col>
+            <v-number-input 
+              v-model="settings.alignExposure" 
+              label="Exposure" :step="1" :precision="1" :min="0.1" :max="60" 
+            />
+          </v-col>
+          <v-col>
+            <v-select v-if="deviceInfo.ccd.isoList != null"
+              v-model="settings.alignISO" 
+              :items="capture.isoList" 
+              label="ISO"
+            />
+            <v-number-input v-else-if="deviceInfo.ccd.usesGain"
+              v-model="settings.alignGain" :rules="[val => {if (val >= 1) return true; return 'Gain must be >= 1'}]"
+              label="Gain" :step="50" :min="1" :max="10000"
+            />
+          </v-col>
+        </v-row>
+      </v-expansion-panel-text>
+     </v-expansion-panel>
+    </v-expansion-panels>
     <v-list class="no-v-list-background">
       <v-list-item>
-        <v-btn block @click="onClickAlign">{{alignText}}</v-btn>
+        <v-btn block :disabled="settings.alignGain < 1" @click="onClickAlign">{{ alignText }}</v-btn>
       </v-list-item>
     </v-list>
     <v-divider class="mb-2"></v-divider>
@@ -46,39 +84,44 @@
         <v-col>Alt: {{dms(polar.vector.altError)}}</v-col>
         <v-col>Az: {{dms(polar.vector.azError)}}</v-col>
       </v-row>
-      Updated:
+      <div v-if="polar.updatedError">Updated:</div>
       <v-row no-gutters v-if="polar.updatedError">
         <v-col>Err: {{dms(polar.updatedError)}}</v-col>
         <v-col>Alt: {{dms(polar.updatedALTError)}}</v-col>
         <v-col>Az: {{dms(polar.updatedAZError)}}</v-col>
       </v-row>
       <v-row no-gutters v-if="polar.vector || polar.updatedError">
-        <v-col></v-col><!-- TODO: arrows -->
-        <v-col></v-col>
-        <v-col></v-col>
+        <v-col />
+        <v-col><v-icon :icon="arrowAltPA.icon" :size="arrowAltPA.size" /></v-col>
+        <v-col><v-icon :icon="arrowAzPA.icon" :size="arrowAzPA.size" /></v-col>
       </v-row>
-      
       <v-divider class="mb-3 ma-2"></v-divider>
     </div>
     <div v-if="polar.stage === 'Idle'">
-      <v-select 
-        v-model="settings.pAHDirection" 
-        :items="['East', 'West']" 
-        label="Direction"
-      />
-      <v-number-input
-        v-model="settings.pAHRotation" 
-        label="Rotation magnitude (&deg;)" :step="15" :min="15" :max="60"
-      />
-      <v-row>
+      <v-row dense>
         <v-col>
-        <v-select
-          v-model="settings.pAHMountSpeed"
-          :items="slewRates"
-          label="Speed"
-          :item-title="(item) => `${item.label} (${item.name})`"
-          item-value="label"
-        ></v-select>
+          <v-select 
+            v-model="settings.pAHDirection" 
+            :items="['East', 'West']" 
+            label="Direction"
+          />
+        </v-col>
+        <v-col>
+          <v-number-input
+            v-model="settings.pAHRotation" 
+            label="Rotation magnitude" suffix="&deg;" :step="15" :min="15" :max="60"
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col>
+          <v-select
+            v-model="settings.pAHMountSpeed"
+            :items="deviceInfo.mount.slewRates"
+            label="Speed"
+            :item-title="(item) => `${item.label} (${item.name})`"
+            item-value="label"
+          />
         </v-col>
         <v-col><v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" /></v-col>
       </v-row>
@@ -107,30 +150,48 @@
   </div>
 </template>
 <script setup>
-import { hms, dms } from "../../util/coords";
+import { hms, hmsFromH, dms } from "../../util/coords";
 </script>
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapState } from "vuex";
 import { ALIGN_GET_ALL_SETTINGS, ALIGN_SET_ALL_SETTINGS, ALIGN_SOLVE, ALIGN_STOP, PAH_REFRESH, PAH_START, PAH_STOP } from "../../util/messageTypes";
 
+const solverActions = [ "syncR", "slewR", "nothingR" ]
+
 export default {
   components: {
     LastNotification,
   },
-  data() {
-    return {
-      modifiableOptions: ["pAHDirection", "pAHRotation", "pAHMountSpeed", "pAHManualSlew", "pAHExposure", "pAHRefreshAlgorithm"],
-    };
-  },
+  data: () => ({
+    arrowAltPA: {
+      icon: "",
+      size: "medium"
+    },
+    arrowAzPA: {
+      icon: "",
+      size: "medium"
+    },
+    modifiableOptions: [
+      "alignAccuracyThreshold", "alignSettlingTime",
+      "alignExposure",
+      ...solverActions,
+
+      "pAHDirection", "pAHRotation",
+      "pAHMountSpeed", "pAHManualSlew",
+      "pAHExposure", "pAHRefreshAlgorithm"
+    ],
+  }),
   computed: {
     ...mapState([
       "align",
       "polar",
-      "slewRates"
+      "deviceInfo"
     ]),
     ...mapState({
-      settings: state => state.alignSettings
+      settings: state => state.alignSettings,
+      polarVector: state => state.polar?.vector,
+      polarUpdatedErr: state => state.polar?.updatedError
     }),
     alignText() {
       if (this.align.status === 'Idle' || this.align.status === 'Failed'
@@ -152,23 +213,78 @@ export default {
     align: {
       deep: true,
       handler(val, oldVal) {
-        if (val?.settings) {
-          Object.keys(val.settings).forEach(k => {
-            if (this.modifiableOptions.indexOf(k) !== -1) {
-              this.settings[k] = val.settings[k];
+        if (!val?.settings) return;
+        Object.keys(val.settings).forEach(k => {
+          if (this.modifiableOptions.includes(k)) {
+            this.settings[k] = val.settings[k];
+            if (solverActions.includes(k) && this.settings[k] === true) {
+              this.settings.$solverAction = k;
             }
-          });
-        }
+          }
+        });
       }
+    },
+    polarVector(nv) {
+      if (!nv) return;
+      this.arrows();
+    },
+    polarUpdatedErr(nv) {
+      if (!nv) return;
+      this.arrows();
     }
   },
   mounted() {
+    if (this.polarVector || this.polarUpdatedErr) this.arrows();
     this.sendMsg([ALIGN_GET_ALL_SETTINGS]);
   },
   methods: {
     ...mapActions([
       "sendMsg",
     ]),
+    arrows() {
+      const altError = (this.polar?.updatedALTError ?? this.polar.vector?.altError) ?? 0;
+      const azError = (this.polar?.updatedAZError ?? this.polar.vector?.azError) ?? 0;
+
+      const minError = 20.0 / 3600.0;  // 20 arcsec
+
+      // these constants are worked out so a 10' error gives a size of 50
+      // and a 1' error gives a size of 20.
+      const largeErr = 10.0 / 60.0, smallErr = 1.0 / 60.0,
+       largeSize = "large", smallSize = "small";
+      let size = "medium";      
+      // alt
+      let absError = Math.abs(altError);
+      if (absError > largeErr)
+        size = largeSize;
+      else if (absError < smallErr)
+        size = smallSize;
+
+      this.arrowAltPA.size = size;
+      if (altError > minError) {
+        // downArrow(altPainter, size, size);
+        this.arrowAltPA.icon = "mdi-arrow-down-bold";
+      } else if (altError < -minError) {
+        // upArrow(altPainter, size, size);
+        this.arrowAltPA.icon = "mdi-arrow-up-bold";
+      }
+
+      // az
+      absError = Math.abs(azError);
+      if (absError > largeErr)
+        size = largeSize;
+      else if (absError < smallErr)
+        size = smallSize;
+      else size = "medium";
+
+      this.arrowAzPA.size = size;
+      if (azError > minError) {
+        // leftArrow(azPainter, size, size);
+        this.arrowAzPA.icon = "mdi-arrow-left-bold";
+      } else if (azError < -minError) {
+        // rightArrow(azPainter, size, size);
+        this.arrowAzPA.icon = "mdi-arrow-right-bold";
+      }
+    },
     onClickAlign() {
       if (this.alignText === "Solve") {
         this.updateSettings();
@@ -178,6 +294,9 @@ export default {
       }
     },
     updateSettings() {
+      solverActions.forEach(a => this.settings[a] = false);
+      this.settings[this.settings.$solverAction] = true;
+
       this.sendMsg([ALIGN_SET_ALL_SETTINGS, {
         ...this.align.settings,
         ...this.settings,

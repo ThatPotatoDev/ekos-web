@@ -8,7 +8,7 @@
     <legend>Sequence Queue</legend>
 
     <div class="toolbar">
-      <button class="icon-btn" :disabled="!canModifyQueue()" title="Add job to sequence queue" @click="addOrRemQueue">
+      <button class="icon-btn" :disabled="!canModifyQueue() || selectedRow != null" title="Add job to sequence queue" @click="addOrRemQueue">
         +
       </button>
 
@@ -102,8 +102,9 @@ export default {
     ]),
     canModifyQueue() {
       if (
-        this.capture.status === "Idle" ||
-        this.capture.status === "Complete"
+        this.capture.status === "Idle"
+        || this.capture.status === "Complete"
+        || this.capture.status === "Aborted"
       ) {
         return true;
       }

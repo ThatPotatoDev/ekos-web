@@ -62,7 +62,6 @@ const defaultEkosStates = {
     de: null,
     ra: null,
   },
-  slewRates: [],
   guide: {
     status: "Idle"
   },
@@ -70,10 +69,18 @@ const defaultEkosStates = {
     status: "Idle"
   },
   capture: {
-    status: "Idle",
-    isoList: null,
-    usesGain: false,
-    filters: []
+    status: "Idle"
+  },
+  deviceInfo: {
+    ccd: {
+      isoList: null,
+      usesGain: false,
+      transferFormats: [],
+      filters: []
+    },
+    mount: {
+      slewRates: []
+    }
   },
   align: {
     status: "Idle"
@@ -266,14 +273,14 @@ const store = createStore({
       state.lastNotification = msg;
     },
     [FM_GET_DATA](state, message) {
-      state.capture.filters = message.payload.filters.map(f => f.label);
+      state.deviceInfo.ccd.filters = message.payload.filters.map(f => f.label);
     },
     [ALIGN_GET_ALL_SETTINGS](state, message) {
       state.align.settings = message.payload;
     },
     [CAPTURE_GET_ALL_SETTINGS](state, message) {
       state.capture.settings = message.payload;
-      if (state.capture.filters.length === 0) {
+      if (state.deviceInfo.ccd.filters.length === 0) {
         this.dispatch("sendMsg", [FM_GET_DATA]);
       }
     },
@@ -293,20 +300,22 @@ const store = createStore({
     [DEVICE_GET](state, message) {
       const selectedProfile = state.profiles.profiles[state.profiles.selectedProfileIndex];
       if (message.payload.device === selectedProfile?.ccd) {
-        let prop = message.payload.properties.find(p => p.name === "CCD_ISO");
-        if (prop !== undefined) {
-          state.capture.isoList = prop.switches.map(p => p.label);
-          state.capture.usesGain = false;
+        const isoProp = message.payload.properties.find(p => p.name === "CCD_ISO");
+        if (isoProp !== undefined) {
+          state.deviceInfo.ccd.isoList = isoProp.switches.map(p => p.label);
+          state.deviceInfo.ccd.usesGain = false;
         } else {
-          prop = message.payload.properties.find(p => p.name === "CCD_GAIN");
-          state.capture.isoList = null;
-          state.capture.usesGain = true;
+          // const gainProp = message.payload.properties.find(p => p.name === "CCD_GAIN");
+          state.deviceInfo.ccd.isoList = null;
+          state.deviceInfo.ccd.usesGain = true;
         }
+        const formatProp = message.payload.properties.find(p => p.name === "CCD_TRANSFER_FORMAT")
+        state.deviceInfo.ccd.transferFormats = formatProp.switches.map(p => p.label);
       } else if (message.payload.device === selectedProfile?.mount) {
         let prop = message.payload.properties.find(p => p.name === "TELESCOPE_SLEW_RATE");
         if (prop !== undefined) {
           prop.switches.forEach((v, i) => {
-            state.slewRates[i] = { label: v.label, name: v.name, index: i };
+            state.deviceInfo.mount.slewRates[i] = { label: v.label, name: v.name, index: i };
           });
         }
       }

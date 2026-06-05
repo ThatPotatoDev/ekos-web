@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.28.0",
+    "@mdi/font": "^7.4.47",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/cli-plugin-babel": "^5.0.8",
     "@vue/cli-plugin-eslint": "^5.0.8",

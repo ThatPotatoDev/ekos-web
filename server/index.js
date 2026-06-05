@@ -139,13 +139,13 @@ messageUser.on("connection", (userWs) => {
 });
 
 messageEkos.on("connection", (ekosWs, req) => {
-  if (messageUser.clients.length === 0) {
-    saveToLastMessages(msgObj);
-  }
+  const connectedMsgObj = { type: "ekos_connected", payload: {} };
   messageUser.clients.forEach(c => {
-    const msgObj = { type: "ekos_connected", payload: {} };
-    sendJSON(c, msgObj);
+    sendJSON(c, connectedMsgObj);
   });
+  if (messageUser.clients.length === 0) {
+    saveToLastMessages(connectedMsgObj);
+  }
   ekosWs.on("message", (msg) => {
     // Forward all messages to the web client, remembering the last one of
     // each type for future connections.
@@ -163,8 +163,10 @@ messageEkos.on("connection", (ekosWs, req) => {
           setupMediaServerOptions(c);
         });
       } else {
+        const hasConnectedMsg = lastMessages.has("ekos_connected");
         console.log("clearing messages")
         lastMessages.clear();
+        if (hasConnectedMsg) lastMessages.set("ekos_connected", {});
       }
     }
   });
