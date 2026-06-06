@@ -46,7 +46,9 @@ import {
   GET_CONNECTION,
   NEW_POLAR_STATE,
   ALIGN_GET_ALL_SETTINGS,
+  DEVICE_PROPERTY_ADD,
 } from '../util/messageTypes';
+import { processDeviceProperty } from '../util/device';
 
 
 const defaultEkosStates = {
@@ -74,7 +76,7 @@ const defaultEkosStates = {
   deviceInfo: {
     ccd: {
       isoList: null,
-      usesGain: false,
+      usesGain: true,
       transferFormats: [],
       filters: []
     },
@@ -298,29 +300,14 @@ const store = createStore({
       }
     },
     [DEVICE_GET](state, message) {
-      const selectedProfile = state.profiles.profiles[state.profiles.selectedProfileIndex];
-      if (message.payload.device === selectedProfile?.ccd) {
-        const isoProp = message.payload.properties.find(p => p.name === "CCD_ISO");
-        if (isoProp !== undefined) {
-          state.deviceInfo.ccd.isoList = isoProp.switches.map(p => p.label);
-          state.deviceInfo.ccd.usesGain = false;
-        } else {
-          // const gainProp = message.payload.properties.find(p => p.name === "CCD_GAIN");
-          state.deviceInfo.ccd.isoList = null;
-          state.deviceInfo.ccd.usesGain = true;
-        }
-        const formatProp = message.payload.properties.find(p => p.name === "CCD_TRANSFER_FORMAT")
-        state.deviceInfo.ccd.transferFormats = formatProp.switches.map(p => p.label);
-      } else if (message.payload.device === selectedProfile?.mount) {
-        let prop = message.payload.properties.find(p => p.name === "TELESCOPE_SLEW_RATE");
-        if (prop !== undefined) {
-          prop.switches.forEach((v, i) => {
-            state.deviceInfo.mount.slewRates[i] = { label: v.label, name: v.name, index: i };
-          });
-        }
-      }
+      message.payload.properties.forEach((prop) => {
+        processDeviceProperty(state, prop);
+      });
       const device = buildDevice(message.payload);
       state.devices[device.name] = device;
+    },
+    [DEVICE_PROPERTY_ADD](state, message) {
+      processDeviceProperty(state, message.payload);
     },
     [ASTRO_GET_NAMES](state, message) {
       state.currObjId = 0;

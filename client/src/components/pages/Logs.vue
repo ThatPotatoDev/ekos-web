@@ -1,6 +1,6 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Logs</div>
+    <div class="text-headline-large">Logs</div>
     <v-divider class="mb-2"></v-divider>
     <v-list>
       <v-list-item v-for="message in messages" :key="message.uuid">

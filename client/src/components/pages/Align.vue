@@ -1,9 +1,9 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Align</div>
+    <div class="text-headline-large">Align</div>
     <v-img class="ma-1" v-if="align.image" :src="align.image.image" :max-width="Math.min(align.image.width, 800)"></v-img>
     <v-divider class="mb-2"></v-divider>
-    <div class="text-h6">{{align.status}}</div>
+    <div class="text-headline-small">{{align.status}}</div>
     <div v-if="align.solution">
       <v-row no-gutters>
         <v-col>RA:</v-col>            <v-col>{{hmsFromH(align.solution['ra.Hours'])}}</v-col>
@@ -15,7 +15,7 @@
         <v-col>FOV:</v-col>           <v-col>{{align.solution.fov}}</v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col>Rotation:</v-col>      <v-col>{{align.solution.PA.toFixed(1)}}&deg;</v-col>
+        <v-col>Rotation:</v-col>      <v-col>{{align.solution.PA.toFixed(2)}}&deg;</v-col>
       </v-row>
       <v-row no-gutters>
         <v-col>ArcSec / Pixel:</v-col><v-col>{{align.solution.pix.toFixed(2)}}"</v-col>
@@ -28,7 +28,7 @@
       <v-radio label="Slew to Target" value="slewR" />
       <v-radio label="Nothing" value="nothingR" />
     </v-radio-group>
-    <v-row dense>
+    <v-row density="compact">
       <v-col>
         <v-number-input
           v-model="settings.alignAccuracyThreshold"
@@ -42,25 +42,45 @@
         />
       </v-col>
     </v-row>
-    <v-expansion-panels>
-     <v-expansion-panel title="Capture Options">
+    <v-expansion-panels :rounded="[8, 0]" static>
+     <v-expansion-panel style="color: var()" title="Capture Options">
       <v-expansion-panel-text>
-        <v-row dense>
+        <v-row density="compact">
           <v-col>
             <v-number-input 
               v-model="settings.alignExposure" 
-              label="Exposure" :step="1" :precision="1" :min="0.1" :max="60" 
+              label="Exposure" :step="1" :precision="1" :min="0.1" :max="60" hide-details
             />
           </v-col>
           <v-col>
             <v-select v-if="deviceInfo.ccd.isoList != null"
               v-model="settings.alignISO" 
               :items="capture.isoList" 
-              label="ISO"
+              label="ISO" hide-details
             />
             <v-number-input v-else-if="deviceInfo.ccd.usesGain"
-              v-model="settings.alignGain" :rules="[val => {if (val >= 1) return true; return 'Gain must be >= 1'}]"
-              label="Gain" :step="50" :min="1" :max="10000"
+              v-model="settings.alignGain" :rules="[val => { return (val >= 1) ? true : false}]"
+              label="Gain" :step="50" :min="1" :max="10000" hide-details
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="deviceInfo.ccd.filters.length !== 0" density="compact">
+          <v-col>
+            <v-select
+              v-model="settings.alignFilter" 
+              :items="deviceInfo.ccd.filters" 
+              :disabled="settings.alignUseCurrentFilter"
+              label="Filter" hide-details
+            >
+              <template #selection="{ item }">
+                <span>{{ settings.alignUseCurrentFilter ? capture.settings.FilterPosCombo : item }}</span>
+              </template>
+            </v-select>
+          </v-col>
+          <v-col>
+            <v-checkbox 
+              v-model="settings.alignUseCurrentFilter" 
+              label="Use current filter" 
             />
           </v-col>
         </v-row>
@@ -73,22 +93,22 @@
       </v-list-item>
     </v-list>
     <v-divider class="mb-2"></v-divider>
-    <div class="text-h5">Polar Alignment</div>
+    <div class="text-headline-medium">Polar Alignment</div>
     <v-divider class="ma-2"></v-divider>
-    <div class="text-h6">{{polar.stage}}</div>
+    <div class="text-headline-small">{{ polar.stage }}</div>
 
     <div v-if="polar.vector">
       Measured:
       <v-row no-gutters v-if="polar.vector">
-        <v-col>Err: {{dms(polar.vector.error)}}</v-col>
-        <v-col>Alt: {{dms(polar.vector.altError)}}</v-col>
-        <v-col>Az: {{dms(polar.vector.azError)}}</v-col>
+        <v-col>Err: {{ dms(polar.vector.error) }}</v-col>
+        <v-col>Alt: {{ dms(polar.vector.altError) }}</v-col>
+        <v-col>Az: {{ dms(polar.vector.azError) }}</v-col>
       </v-row>
       <div v-if="polar.updatedError">Updated:</div>
       <v-row no-gutters v-if="polar.updatedError">
-        <v-col>Err: {{dms(polar.updatedError)}}</v-col>
-        <v-col>Alt: {{dms(polar.updatedALTError)}}</v-col>
-        <v-col>Az: {{dms(polar.updatedAZError)}}</v-col>
+        <v-col>Err: {{ dms(polar.updatedError) }}</v-col>
+        <v-col>Alt: {{ dms(polar.updatedALTError) }}</v-col>
+        <v-col>Az: {{ dms(polar.updatedAZError) }}</v-col>
       </v-row>
       <v-row no-gutters v-if="polar.vector || polar.updatedError">
         <v-col />
@@ -98,22 +118,22 @@
       <v-divider class="mb-3 ma-2"></v-divider>
     </div>
     <div v-if="polar.stage === 'Idle'">
-      <v-row dense>
+      <v-row density="compact">
         <v-col>
           <v-select 
             v-model="settings.pAHDirection" 
             :items="['East', 'West']" 
-            label="Direction"
+            label="Direction" hide-details
           />
         </v-col>
         <v-col>
           <v-number-input
             v-model="settings.pAHRotation" 
-            label="Rotation magnitude" suffix="&deg;" :step="15" :min="15" :max="60"
+            label="Rotation magnitude" suffix="&deg;" :step="15" :min="15" :max="60" hide-details
           />
         </v-col>
       </v-row>
-      <v-row dense>
+      <v-row density="compact">
         <v-col>
           <v-select
             v-model="settings.pAHMountSpeed"
@@ -123,7 +143,9 @@
             item-value="label"
           />
         </v-col>
-        <v-col><v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" /></v-col>
+        <v-col>
+          <v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" />
+        </v-col>
       </v-row>
     </div>
     <div v-else-if="polar.stage === 'Select Star'">
@@ -174,8 +196,8 @@ export default {
     },
     modifiableOptions: [
       "alignAccuracyThreshold", "alignSettlingTime",
-      "alignExposure",
-      ...solverActions,
+      "alignExposure", "alignGain", "alignFilter",
+      "alignUseCurrentFilter", ...solverActions,
 
       "pAHDirection", "pAHRotation",
       "pAHMountSpeed", "pAHManualSlew",
@@ -184,7 +206,7 @@ export default {
   }),
   computed: {
     ...mapState([
-      "align",
+      "align", "capture",
       "polar",
       "deviceInfo"
     ]),
@@ -317,3 +339,12 @@ export default {
   }
 };
 </script>
+<style scoped>
+.v-expansion-panel :deep(.v-expansion-panel-text__wrapper) {
+  padding: 8px 12px 16px;
+}
+.v-input :deep(.v-input__details) {
+  min-height: 0px;
+  padding-top: 0px;
+}
+</style>

@@ -5,7 +5,6 @@
 #celestial-map {
   max-width: 800px;
 }
-
 #celestial-map canvas {
   margin: auto;
   display: block;
@@ -15,12 +14,12 @@
 <script>
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = src
-    s.onload = resolve
-    s.onerror = reject
-    document.head.appendChild(s)
-  })
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
 }
 export default {
   props: {
@@ -60,11 +59,10 @@ export default {
   },
   watch: {
     center(newVal, oldVal) {
-      if (!this.newVal) return;
       if (!this.ready) return;
 
       let update = false;
-      if (oldVal === null || oldVal.length != 2 || newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1]) {
+      if (!oldVal || oldVal.length != 2 || newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1]) {
         update = true;
       }
 

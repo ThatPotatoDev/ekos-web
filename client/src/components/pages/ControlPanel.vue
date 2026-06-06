@@ -1,6 +1,6 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Control Panel</div>
+    <div class="text-headline-large">Control Panel</div>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
     <v-expansion-panels>

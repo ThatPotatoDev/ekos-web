@@ -1,6 +1,6 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Settings</div>
+    <div class="text-headline-large">Settings</div>
     <v-divider class="mb-2"></v-divider>
     <v-list class="no-v-list-background">
       <v-list-item v-if="connection?.online"><v-btn @click="stopProfile" block>Stop Profile</v-btn></v-list-item>

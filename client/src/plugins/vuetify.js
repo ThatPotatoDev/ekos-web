@@ -1,6 +1,8 @@
 import { createVuetify } from 'vuetify';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
+
 import 'vuetify/styles';
+import '../styles/style.css';
 
 const vuetify = createVuetify({
   theme: {
@@ -13,6 +15,6 @@ const vuetify = createVuetify({
       mdi,
     },
   },
-})
+});
 
-export default vuetify
+export default vuetify;

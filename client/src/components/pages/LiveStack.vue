@@ -1,6 +1,6 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Live Stack</div>
+    <div class="text-headline-large">Live Stack</div>
     <v-img class="ma-1" :src="livestack.image" max-width="800">
     </v-img>
     <v-divider class="mb-2 mt-2"></v-divider>

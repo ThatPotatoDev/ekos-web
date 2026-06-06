@@ -7,7 +7,6 @@ import vuetify from '@/plugins/vuetify'
 import store from '@/plugins/vuex'
 
 import VueNativeSock from 'vue-native-websocket-vue3'
-import 'vuetify/styles'
 
 const app = createApp(App)
 

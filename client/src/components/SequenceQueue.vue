@@ -86,9 +86,9 @@ export default {
     ]),
     addOrRemQueueText() {
       if (this.selectedRow === null) {
-        return "Add job to sequence queue";
+        return "Add job to Sequence Queue";
       } else {
-        return "Remove job from sequence queue";
+        return "Remove job from Sequence Queue";
       }
     },
   },
@@ -157,6 +157,8 @@ export default {
 }
 
 .icon-btn {
+  border: none;
+  background: none;
   width: 32px;
   height: 32px;
   flex-shrink: 0;

@@ -30,15 +30,15 @@ const routes = [{
   icon: "mdi-target",
   component: Align,
 },{
-  name: "Guide",
-  path: "/guide",
-  icon: "mdi-compass",
-  component: Guide,
-},{
   name: "Focus",
   path: "/focus",
   icon: "mdi-magnify",
   component: Focus,
+},{
+  name: "Guide",
+  path: "/guide",
+  icon: "mdi-compass",
+  component: Guide,
 },{
   name: "Logs",
   path: "/logs",

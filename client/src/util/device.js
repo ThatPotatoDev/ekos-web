@@ -22,6 +22,44 @@ const SWITCH_STATE = {
   ISS_ON: 1,
 };
 
+const processDeviceProperty = (state, prop) => {
+  if (!prop) return;
+  const selectedProfile = state.profiles.profiles[state.profiles.selectedProfileIndex];
+  if (!selectedProfile) return;
+  switch (prop.device) {
+    case selectedProfile.ccd: {
+      switch (prop.name) {
+        case "CCD_ISO": {
+          console.log("iso")
+          state.deviceInfo.ccd.isoList = prop.switches.map(p => p.label);
+          state.deviceInfo.ccd.usesGain = false;
+          break;
+        }
+        //TODO: smth w/ device prop subscribe
+        case "CCD_TRANSFER_FORMAT": {
+          console.log("format")
+          console.log(state.deviceInfo.ccd.transferFormats, prop);
+          state.deviceInfo.ccd.transferFormats = prop.switches.map(p => p.label);
+          break;
+        }
+      }
+      break;
+    }
+    case selectedProfile.mount: {
+      switch (prop.name) {
+        case "TELESCOPE_SLEW_RATE": {
+          console.log("slew")
+          prop.switches.forEach((v, i) => {
+            state.deviceInfo.mount.slewRates[i] = { label: v.label, name: v.name, index: i };
+          });
+          break;
+        }
+      }
+      break;
+    }
+  }
+};
+
 const buildDevice = (payload) => {
   if (!payload) {
     return null;
@@ -52,4 +90,5 @@ export {
   RULE,
   SWITCH_STATE,
   buildDevice,
+  processDeviceProperty,
 };

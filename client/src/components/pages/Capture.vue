@@ -1,6 +1,6 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Capture</div>
+    <div class="text-headline-large">Capture</div>
     <v-img class="ma-1" v-if="preview.image" :src="preview.image.image" :max-width="Math.min(preview.image.width, 800)">
       <v-overlay absolute :value="this.showCrosshairs" color="rgba(0,0,0,0)">
         <v-img :src="crosshairs"></v-img>
@@ -11,7 +11,7 @@
       <v-icon icon="mdi-target" height="24" />
     </v-btn>
     <v-divider class="mb-2 mt-2"></v-divider>
-    <div class="text-h6">{{ capture.status }}</div>
+    <div class="text-headline-small">{{ capture.status }}</div>
     <div v-if="capture.expr">
       <v-row v-if="capture.seqv !== capture.seqr" no-gutters>
         <v-col>Exposure:</v-col>              <v-col>{{ capture.expv.toFixed(2) }} of {{ capture.expr }}</v-col>
@@ -33,7 +33,7 @@
     <v-divider class="mb-2"></v-divider>
     <!-- TODO: see if rules are necessary  -->
     <v-form class="ma-1" validate-on="blur">
-      <v-row dense>
+      <v-row density="compact">
         <v-col>
           <v-select 
             v-model="captureSettings.captureTypeS" 
@@ -49,7 +49,7 @@
           />
         </v-col>
       </v-row>
-      <v-row dense>
+      <v-row density="compact">
         <v-col>
           <v-number-input
             v-model="captureSettings.captureCountN" 
@@ -64,7 +64,7 @@
           />
         </v-col>
       </v-row>
-      <v-row dense>
+      <v-row density="compact">
         <v-col>
           <non-linear-number-input
           v-model="captureSettings.captureExposureN"

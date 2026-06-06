@@ -1,9 +1,9 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Focus</div>
+    <div class="text-headline-large">Focus</div>
     <v-img class="ma-1" v-if="focus.image" :src="focus.image.image" :max-width="Math.min(focus.image.width, 800)"></v-img>
     <v-divider class="mb-2"></v-divider>
-    <div class="text-h6">{{focus.status}}</div>
+    <div class="text-headline-small">{{focus.status}}</div>
     <div v-if="focus.hfr">
       <v-row no-gutters>
         <v-col>HFR:</v-col>      <v-col>{{focus.hfr.toFixed(2)}}</v-col>

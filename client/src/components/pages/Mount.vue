@@ -1,11 +1,11 @@
 <template>
   <div class="pa-2">
-    <div class="text-h4">Mount</div>
-    <v-divider class="mb-2"></v-divider>
-    <div class="text-h6">{{mount.status}}</div>
-    <SkyMap :center="mountPosition"></SkyMap>
+    <div class="text-headline-large">Mount</div>
+    <v-divider class="mb-2" />
+    <div class="text-headline-small">{{mount.status}}</div>
+    <SkyMap :center="mountPosition" />
     <LastNotification />
-    <v-divider class="mb-2"></v-divider>
+    <v-divider class="mb-2" />
     <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block

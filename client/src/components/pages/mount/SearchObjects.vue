@@ -153,6 +153,7 @@ export default {
 }
 
 .popup input {
+  background-color: rgb(var(--v-theme-surface));
   width: 100%;
   padding: 16px;
   border: none;
