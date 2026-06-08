@@ -43,7 +43,7 @@
       </v-col>
     </v-row>
     <v-expansion-panels :rounded="[8, 0]" static>
-     <v-expansion-panel style="color: var()" title="Capture Options">
+     <v-expansion-panel title="Capture Options">
       <v-expansion-panel-text>
         <v-row density="compact">
           <v-col>
@@ -115,8 +115,10 @@
         <v-col><v-icon :icon="arrowAltPA.icon" :size="arrowAltPA.size" /></v-col>
         <v-col><v-icon :icon="arrowAzPA.icon" :size="arrowAzPA.size" /></v-col>
       </v-row>
-      <v-divider class="mb-3 ma-2"></v-divider>
+      <v-divider class="mb-2 mt-2" />
     </div>
+    <p> {{ polar.message }} </p>
+    <v-divider class="mb-2" />
     <div v-if="polar.stage === 'Idle'">
       <v-row density="compact">
         <v-col>
@@ -151,16 +153,24 @@
     <div v-else-if="polar.stage === 'Select Star'">
       <v-number-input
         v-model="settings.pAHExposure" 
-        label="Refresh Exposure" :min="1" :max="10"
+        label="Refresh Exposure" :min="1" :max="30"
       />
+      <!-- TODO: eventally implement other refresh algos? -->
       <v-select 
         v-model="settings.pAHRefreshAlgorithm" 
-        :items="['Plate Solve','Move Star','Move Star & Calc Error']"
-        label="Direction"
+        :items="['Plate Solve'/*,'Move Star','Move Star & Calc Error'*/]"
+        label="Direction" 
       />
       <v-list class="no-v-list-background">
         <v-list-item>
           <v-btn block @click="onClickPARefresh">Refresh</v-btn>
+        </v-list-item>
+      </v-list>
+    </div>
+    <div v-else-if="align.settings.pAHManualSlew && polar.stage.endsWith(' Rotation')">
+      <v-list class="no-v-list-background">
+        <v-list-item>
+          <v-btn block @click="onClickPASlewDone">Slew Done</v-btn>
         </v-list-item>
       </v-list>
     </div>
@@ -177,7 +187,7 @@ import { hms, hmsFromH, dms } from "../../util/coords";
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
 import { mapActions, mapState } from "vuex";
-import { ALIGN_GET_ALL_SETTINGS, ALIGN_SET_ALL_SETTINGS, ALIGN_SOLVE, ALIGN_STOP, PAH_REFRESH, PAH_START, PAH_STOP } from "../../util/messageTypes";
+import { ALIGN_GET_ALL_SETTINGS, ALIGN_SET_ALL_SETTINGS, ALIGN_SOLVE, ALIGN_STOP, PAH_REFRESH, PAH_SLEW_DONE, PAH_START, PAH_STOP } from "../../util/messageTypes";
 
 const solverActions = [ "syncR", "slewR", "nothingR" ]
 
@@ -289,7 +299,7 @@ export default {
       } else if (altError < -minError) {
         // upArrow(altPainter, size, size);
         this.arrowAltPA.icon = "mdi-arrow-up-bold";
-      }
+      } else this.arrowAltPA.icon = "";
 
       // az
       absError = Math.abs(azError);
@@ -306,7 +316,7 @@ export default {
       } else if (azError < -minError) {
         // rightArrow(azPainter, size, size);
         this.arrowAzPA.icon = "mdi-arrow-right-bold";
-      }
+      } else this.arrowAzPA.icon = "";
     },
     onClickAlign() {
       if (this.alignText === "Solve") {
@@ -332,6 +342,9 @@ export default {
       } else {
         this.sendMsg([PAH_STOP]);
       }
+    },
+    onClickPASlewDone() {
+      this.sendMsg([PAH_SLEW_DONE]);
     },
     onClickPARefresh() {
       this.updateSettings();

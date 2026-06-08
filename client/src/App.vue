@@ -18,7 +18,9 @@
       </v-list>
     </v-navigation-drawer>
     <v-main>
-      <router-view v-if="this.connection?.online || $route.path === '/settings'" />
+      <template v-if="connection?.online || $route.path === '/settings'">
+        <router-view :key="$route.fullPath" />
+      </template>
       <div v-else class="pa-2">
         <v-select v-model="profiles.selectedProfile" :items="profiles.profiles.map(p => p.name)" label="Profile" item-text="name" item-value="name" />
         <v-btn @click.stop="startProfileClicked">Start Profile</v-btn>

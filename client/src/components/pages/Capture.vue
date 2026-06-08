@@ -78,28 +78,52 @@
       <v-row density="compact">
         <v-col>
           <non-linear-number-input
-          v-model="captureSettings.captureExposureN"
-          label="Exposure (sec)"
-        />
+            v-model="captureSettings.captureExposureN"
+            label="Exposure (sec)" hide-details
+          />
         </v-col>
         <v-col>
           <v-select v-if="deviceInfo.ccd.isoList != null"
             v-model="captureSettings.captureISOS" 
             :items="deviceInfo.ccd.isoList" 
-            label="ISO"
+            label="ISO" hide-details
           />
           <v-number-input v-else-if="deviceInfo.ccd.usesGain"
             v-model="captureSettings.captureGainN" :rules="[val => {if (val >= 1) return true; return 'Gain must be >= 1'}]"
-            label="Gain" :step="50" :min="1" :max="10000"
+            label="Gain" :step="50" :min="1" :max="10000" hide-details
           />
         </v-col>
       </v-row>
     </v-form>
-    <v-divider class="mb-2"></v-divider>
+    <v-expansion-panels class="mt-3" :rounded="[8, 0]" static>
+     <v-expansion-panel>
+      <v-expansion-panel-title style="background-color: rgb(var(--v-theme-code))">
+        File Settings
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
+        <v-row density="compact">
+          <v-col>
+            <v-text-field 
+              v-model="captureSettings.targetNameT"
+              label="Target"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-model="captureSettings.fileDirectoryT" 
+              label="Directory"
+            />
+          </v-col>
+        </v-row>
+      </v-expansion-panel-text>
+     </v-expansion-panel>
+    </v-expansion-panels>
+    <v-divider class="mb-2 mt-2"></v-divider>
     <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block @click="onPreviewClick"
-          :disabled="this.startStopText !== 'Start'">Preview</v-btn>
+          :disabled="this.startStopText !== 'Start'"
+        >Preview</v-btn>
       </v-list-item>
       <v-list-item>
         <v-btn block @click="toggleCapture">{{ startStopText }}</v-btn>
@@ -127,7 +151,8 @@ export default {
       "captureTypeS", "FilterPosCombo",
       "captureExposureN", "captureCountN",
       "captureISOS", "captureGainN",
-      "captureFormatS", "captureEncodingS"
+      "captureFormatS", "captureEncodingS",
+      "targetNameT", "fileDirectoryT"
     ],
   }),
   computed: {
