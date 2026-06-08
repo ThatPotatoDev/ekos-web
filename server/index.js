@@ -30,6 +30,9 @@ var signals = {
 const shutdown = (signal, value) => {
   console.log("shutdown!");
 
+  messageUser.clients.forEach(c => {
+    sendJSON(c, { type: "new_connection_state", payload: { connected: false, online: false } });
+  });
   messageEkos.close();
   mediaServer.close();
   cloudServer.close();

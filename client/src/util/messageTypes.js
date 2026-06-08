@@ -25,6 +25,7 @@ export const NEW_VIDEO_FRAME = 'new_video_frame';
 export const NEW_ALIGN_FRAME = 'new_align_frame';
 export const NEW_NOTIFICATION = 'new_notification';
 export const NEW_TEMPERATURE = 'new_temperature';
+export const NEW_INDI_STATE = 'new_indi_state';
 
 export const SET_CLIENT_STATE = 'set_client_state';
 export const LOGOUT = 'logout';
@@ -156,26 +157,34 @@ export const ASTRO_GET_SKYPOINT_IMAGE = "astro_get_skypoint_image";
 export const ASTRO_GET_OBJECTS_OBSERVABILITY = "astro_get_objects_observability";
 export const ASTRO_GET_OBJECTS_RISESET = "astro_get_objects_riseset";
 
-export const SKYOBJECT_STAR                  = 0;
-export const SKYOBJECT_CATALOG_STAR          = 1;
-export const SKYOBJECT_PLANET                = 2;
-export const SKYOBJECT_OPEN_CLUSTER          = 3;
-export const SKYOBJECT_GLOBULAR_CLUSTER      = 4;
-export const SKYOBJECT_GASEOUS_NEBULA        = 5;
-export const SKYOBJECT_PLANETARY_NEBULA      = 6;
-export const SKYOBJECT_SUPERNOVA_REMNANT     = 7;
-export const SKYOBJECT_GALAXY                = 8;
-export const SKYOBJECT_COMET                 = 9;
-export const SKYOBJECT_ASTEROID              = 10;
-export const SKYOBJECT_CONSTELLATION         = 11;
-export const SKYOBJECT_MOON                  = 12;
-export const SKYOBJECT_ASTERISM              = 13;
-export const SKYOBJECT_GALAXY_CLUSTER        = 14;
-export const SKYOBJECT_DARK_NEBULA           = 15;
-export const SKYOBJECT_QUASAR                = 16;
-export const SKYOBJECT_MULT_STAR             = 17;
-export const SKYOBJECT_RADIO_SOURCE          = 18;
-export const SKYOBJECT_SATELLITE             = 19;
-export const SKYOBJECT_SUPERNOVA             = 20;
-export const SKYOBJECT_NUMBER_OF_KNOWN_TYPES = 21;
-export const SKYOBJECT_TYPE_UNKNOWN          = 255;
+export const IndiStatus = Object.freeze({
+    Idle: 0,
+    Pending: 1,
+    Success: 2,
+    Error: 3
+});
+export const SkyObject = Object.freeze({
+    STAR: 0,
+    CATALOG_STAR: 1,
+    PLANET: 2,
+    OPEN_CLUSTER: 3,
+    GLOBULAR_CLUSTER: 4,
+    GASEOUS_NEBULA: 5,
+    PLANETARY_NEBULA: 6,
+    SUPERNOVA_REMNANT: 7,
+    GALAXY: 8,
+    COMET: 9,
+    ASTEROID: 10,
+    CONSTELLATION: 11,
+    MOON: 12,
+    ASTERISM: 13,
+    GALAXY_CLUSTER: 14,
+    DARK_NEBULA: 15,
+    QUASAR: 16,
+    MULT_STAR: 17,
+    RADIO_SOURCE: 18,
+    SATELLITE: 19,
+    SUPERNOVA: 20,
+    NUMBER_OF_KNOWN_TYPES: 21,
+    TYPE_UNKNOWN: 255
+});

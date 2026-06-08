@@ -16,39 +16,37 @@
         </template>
       </li>
       <li>
-        Mount: {{mount.status}}
-        <ul v-if="mount.ra">
-          <li>RA: {{ra}}</li>
-          <li>DEC: {{dec}}</li>
-        </ul>
-        <ul v-if="mount.meridianFlipText">
-          <li>{{mount.meridianFlipText}}</li>
+        Mount: {{ mount.status }}
+        <ul>
+          <li v-if="mount.ra">RA: {{ ra }}</li>
+          <li v-if="mount.de">DEC: {{ dec }}</li>
+          <li v-if="mount.meridianFlipText">{{ mount.meridianFlipText }}</li>
         </ul>
       </li>
       <li>
-        Guider: {{guide.status}}
+        Guider: {{ guide.status }}
         <ul v-if="guide.derms">
-          <li>RA RMS: {{guide.rarms.toFixed(3)}}"</li>
-          <li>DEC RMS: {{guide.derms.toFixed(3)}}"</li>
+          <li>RA RMS: {{ guide.rarms.toFixed(3) }}"</li>
+          <li>DEC RMS: {{ guide.derms.toFixed(3) }}"</li>
         </ul>
       </li>
       <li>
-        Focus: {{focus.status}}
-        <ul v-if="focus.hfr">
-          <li>HFR: {{focus.hfr.toFixed(2)}}"</li>
-          <li v-if="focus.pos">Position: {{focus.pos}}</li>
+        Focus: {{ focus.status }}
+        <ul>
+          <li v-if="focus.hfr">HFR: {{ focus.hfr.toFixed(2) }}"</li>
+          <li v-if="focus.pos">Position: {{ focus.pos }}</li>
         </ul>
       </li>
       <li>
-        Capture: {{capture.status}}
+        Capture: {{ capture.status }}
         <ul v-if="capture.seql">
-          <li>{{capture.seql}}</li>
+          <li>{{ capture.seql }}</li>
         </ul>
       </li>
       <li>
-        Alignment: {{align.status}}
+        Alignment: {{ align.status }}
         <ul v-if="align.seql">
-          <li>{{align.seql}}</li>
+          <li>{{ align.seql }}</li>
         </ul>
       </li>
     </ul>

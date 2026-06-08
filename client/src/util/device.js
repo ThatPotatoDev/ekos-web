@@ -1,3 +1,5 @@
+import { DEVICE_PROPERTY_GET } from "./messageTypes";
+
 const PERM = {
   IP_RO: 0,
   IP_WO: 1,
@@ -22,24 +24,53 @@ const SWITCH_STATE = {
   ISS_ON: 1,
 };
 
-const processDeviceProperty = (state, prop) => {
+
+
+const processDeviceProperty = (dispatch, state, prop) => {
   if (!prop) return;
   const selectedProfile = state.profiles.profiles[state.profiles.selectedProfileIndex];
   if (!selectedProfile) return;
+
+  if (!state.deviceTypeMap.has(prop.device)) {
+    let deviceType = "";
+    switch (prop.device) {
+      case selectedProfile.ccd: {
+        deviceType = "ccd"; break;
+      } case selectedProfile.mount: {
+        deviceType = "mount"; break;
+      } default: {
+        return;
+      }
+    }
+    state.deviceTypeMap.set(prop.device, deviceType);
+  };
+  // console.log(prop.device)
+  const deviceType = state.deviceTypeMap.get(prop.device);
+
+  const labels = state.propLabelsMap.get(deviceType);
+  if (labels?.[prop.name] === undefined) return;
+  if (prop.switches?.map(p => p.label)?.includes(undefined)) {
+    dispatch('sendMsg', [DEVICE_PROPERTY_GET, { device: prop.device, property: prop.name, compact: false }]);
+    return;
+  } else {
+    labels[prop.name] = prop.switches.map(p => p.label);
+  }
+
   switch (prop.device) {
     case selectedProfile.ccd: {
       switch (prop.name) {
         case "CCD_ISO": {
           console.log("iso")
-          state.deviceInfo.ccd.isoList = prop.switches.map(p => p.label);
+          state.deviceInfo.ccd.isoList = prop.switches.map((p, i) => p.label ?? labels[prop.name][i]);
           state.deviceInfo.ccd.usesGain = false;
           break;
         }
-        //TODO: smth w/ device prop subscribe
+        case "CCD_CAPTURE_FORMAT": {
+          state.deviceInfo.ccd.captureFormats = prop.switches.map((p, i) => p.label ?? labels[prop.name][i]);
+          break;
+        }
         case "CCD_TRANSFER_FORMAT": {
-          console.log("format")
-          console.log(state.deviceInfo.ccd.transferFormats, prop);
-          state.deviceInfo.ccd.transferFormats = prop.switches.map(p => p.label);
+          state.deviceInfo.ccd.transferFormats = prop.switches.map((p, i) => p.label ?? labels[prop.name][i]);
           break;
         }
       }
@@ -48,9 +79,8 @@ const processDeviceProperty = (state, prop) => {
     case selectedProfile.mount: {
       switch (prop.name) {
         case "TELESCOPE_SLEW_RATE": {
-          console.log("slew")
           prop.switches.forEach((v, i) => {
-            state.deviceInfo.mount.slewRates[i] = { label: v.label, name: v.name, index: i };
+            state.deviceInfo.mount.slewRates[i] = { label: v.label ?? labels[prop.name][i], name: v.name, index: i };
           });
           break;
         }

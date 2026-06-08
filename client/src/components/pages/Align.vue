@@ -31,13 +31,13 @@
     <v-row density="compact">
       <v-col>
         <v-number-input
-          v-model="settings.alignAccuracyThreshold"
+          v-model="settings.alignAccuracyThreshold" suffix="arcsec"
           label="Accuracy" :step="10" :min="1" :max="1200"
         />
       </v-col>
       <v-col>
         <v-number-input
-          v-model="settings.alignSettlingTime"
+          v-model="settings.alignSettlingTime" suffix="ms" 
           label="Settle" :step="100" :min="0" :max="15000"
         />
       </v-col>
@@ -48,14 +48,14 @@
         <v-row density="compact">
           <v-col>
             <v-number-input 
-              v-model="settings.alignExposure" 
+              v-model="settings.alignExposure" suffix="sec"
               label="Exposure" :step="1" :precision="1" :min="0.1" :max="60" hide-details
             />
           </v-col>
           <v-col>
             <v-select v-if="deviceInfo.ccd.isoList != null"
               v-model="settings.alignISO" 
-              :items="capture.isoList" 
+              :items="deviceInfo.ccd.isoList" 
               label="ISO" hide-details
             />
             <v-number-input v-else-if="deviceInfo.ccd.usesGain"
@@ -139,7 +139,7 @@
             v-model="settings.pAHMountSpeed"
             :items="deviceInfo.mount.slewRates"
             label="Speed"
-            :item-title="(item) => `${item.label} (${item.name})`"
+            :item-title="(item) => item.label != item.name ? `${item.label} (${item.name})` : item.label"
             item-value="label"
           />
         </v-col>
@@ -197,7 +197,8 @@ export default {
     modifiableOptions: [
       "alignAccuracyThreshold", "alignSettlingTime",
       "alignExposure", "alignGain", "alignFilter",
-      "alignUseCurrentFilter", ...solverActions,
+      "alignUseCurrentFilter", "alignISO",
+      ...solverActions,
 
       "pAHDirection", "pAHRotation",
       "pAHMountSpeed", "pAHManualSlew",

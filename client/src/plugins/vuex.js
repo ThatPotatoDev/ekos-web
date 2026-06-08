@@ -41,12 +41,13 @@ import {
   ASTRO_GET_NAMES,
   ASTRO_GET_DESIGNATIONS,
   ASTRO_SEARCH_OBJECTS,
-  SKYOBJECT_PLANET,
-  SKYOBJECT_COMET,
+  SkyObject,
   GET_CONNECTION,
   NEW_POLAR_STATE,
   ALIGN_GET_ALL_SETTINGS,
   DEVICE_PROPERTY_ADD,
+  DEVICE_PROPERTY_GET,
+  NEW_INDI_STATE,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
 
@@ -78,6 +79,7 @@ const defaultEkosStates = {
       isoList: null,
       usesGain: true,
       transferFormats: [],
+      captureFormats: [],
       filters: []
     },
     mount: {
@@ -87,9 +89,8 @@ const defaultEkosStates = {
   align: {
     status: "Idle"
   },
-  polar: {
-
-  },
+  polar: { },
+  indiStatus: 0,
   notifications: [],
   lastNotification: null,
   devices: {},
@@ -102,6 +103,10 @@ const defaultEkosStates = {
   captureSettings: {},
   alignSettings: {},
   currObjId: 0,
+  propLabelsMap: new Map([
+    ["ccd", { "CCD_ISO": [], "CCD_CAPTURE_FORMAT": [], "CCD_TRANSFER_FORMAT": [] }],
+    ["mount", { "TELESCOPE_SLEW_RATE": [] }]
+  ]),
 };
 
 const store = createStore({
@@ -121,7 +126,9 @@ const store = createStore({
       lon: null,
     },
     gotoObjects: new Map(),
+    deviceTypeMap: new Map(),
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
+    propLabelsMap: structuredClone(defaultEkosStates.propLabelsMap),
   },
   getters: {
     mountPosition: state => {
@@ -147,6 +154,7 @@ const store = createStore({
     SOCKET_ONOPEN(state, event) {
       state.socket.connection = event.currentTarget;
       state.socket.isConnected = true;
+      this.dispatch("sendMsg", [SET_CLIENT_STATE, { state: true }]);
       this.dispatch("sendMsg", [GET_CONNECTION]);
     },
     SOCKET_ONCLOSE(state) {
@@ -269,6 +277,9 @@ const store = createStore({
         ...message.payload,
       };
     },
+    [NEW_INDI_STATE](state, message) {
+      state.indiStatus = message.payload.status;
+    },
     [NEW_NOTIFICATION](state, message) {
       const msg = { ts: new Date(), ...message.payload }
       state.notifications.push(msg);
@@ -301,13 +312,16 @@ const store = createStore({
     },
     [DEVICE_GET](state, message) {
       message.payload.properties.forEach((prop) => {
-        processDeviceProperty(state, prop);
+        processDeviceProperty(this.dispatch, state, prop);
       });
       const device = buildDevice(message.payload);
       state.devices[device.name] = device;
     },
     [DEVICE_PROPERTY_ADD](state, message) {
-      processDeviceProperty(state, message.payload);
+      processDeviceProperty(this.dispatch, state, message.payload);
+    },
+    [DEVICE_PROPERTY_GET](state, message) {
+      processDeviceProperty(this.dispatch, state, message.payload);
     },
     [ASTRO_GET_NAMES](state, message) {
       state.currObjId = 0;
@@ -331,8 +345,8 @@ const store = createStore({
       }
 
       state.gotoObjects = map;
-      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SKYOBJECT_PLANET, maxMagnitude: 100, minAlt: -180 } ])
-      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SKYOBJECT_COMET, maxMagnitude: 25, minAlt: 0 } ])
+      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SkyObject.PLANET, maxMagnitude: 100, minAlt: -180 } ]);
+      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SkyObject.COMET, maxMagnitude: 25, minAlt: 0 } ]);
       this.dispatch("sendMsg", [ASTRO_GET_DESIGNATIONS]);
     },
     [ASTRO_GET_DESIGNATIONS](state, message) {
@@ -369,10 +383,14 @@ const store = createStore({
   },
   actions: {
     reset: ({ state }) => {
-      Object.keys(defaultEkosStates).forEach(k => {
-        state[k] = defaultEkosStates[k];
-      });
+      // Object.keys(defaultEkosStates).forEach(k => {
+      //   state[k] = defaultEkosStates[k];
+      // });
+      Object.assign(state, JSON.parse(JSON.stringify(defaultEkosStates)));
       state.gotoObjects.clear();
+      state.deviceTypeMap.clear();
+      state.propLabelsMap = structuredClone(defaultEkosStates.propLabelsMap);
+      console.log("reset");
     },
     sendMessage: ({ state }, message) => {
       state.socket.connection?.send(JSON.stringify(message));
@@ -407,13 +425,17 @@ const store = createStore({
     },
     findDeviceDetails: ({ dispatch, state }) => {
       const profiles = state.profiles;
-      if (profiles.selectedProfileIndex === -1 || profiles.profiles[profiles.selectedProfileIndex]?.name !== profiles.selectedProfile) {
+      if (
+        profiles.selectedProfileIndex === -1 
+        || profiles.profiles[profiles.selectedProfileIndex]?.name !== profiles.selectedProfile
+      ) {
         state.profiles.selectedProfileIndex = profiles.profiles.findIndex(p => p.name === profiles.selectedProfile);
       }
-      //ISO or gain
-      dispatch("sendMsg", [DEVICE_GET, { device: state.profiles.profiles[state.profiles.selectedProfileIndex].ccd }]);
+      const selectedProfile = state.profiles.profiles[state.profiles.selectedProfileIndex];
 
-      dispatch("sendMsg", [DEVICE_GET, { device: state.profiles.profiles[state.profiles.selectedProfileIndex].mount }]);
+      for (const deviceType of state.propLabelsMap.keys()) {
+        dispatch("sendMsg", [DEVICE_GET, { device: selectedProfile[deviceType] }]);
+      }
     },
 
     sendMsg: ({ dispatch }, args) => {

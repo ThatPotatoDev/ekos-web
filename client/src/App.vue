@@ -3,8 +3,9 @@
     <v-app-bar app>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Ekos Web</v-toolbar-title>
-      <v-icon icon="mdi-cloud" height="24" :class="connected ? 'greenFilledIn' : 'redFilledIn'"/>
-      <v-icon icon="mdi-telescope" height="24" class="ml-2 mr-2" :class="ekosStarted ? 'greenFilledIn' : 'redFilledIn'"/>
+      <v-icon icon="mdi-cloud" height="24" class="mr-2" :class="socket.isConnected ? 'greenFilledIn' : 'redFilledIn'"/>
+      <v-icon icon="mdi-laptop" height="24" class="mr-2" :class="connected ? 'greenFilledIn' : 'redFilledIn'"/>
+      <v-icon icon="mdi-telescope" height="24" class="mr-2" :class="connection?.online ? ekosStartedClass : 'redFilledIn'"/>
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" app>
       <v-list dense>
@@ -17,7 +18,7 @@
       </v-list>
     </v-navigation-drawer>
     <v-main>
-      <router-view v-if="ekosStarted || $route.path === '/settings'"></router-view>
+      <router-view v-if="this.connection?.online || $route.path === '/settings'" />
       <div v-else class="pa-2">
         <v-select v-model="profiles.selectedProfile" :items="profiles.profiles.map(p => p.name)" label="Profile" item-text="name" item-value="name" />
         <v-btn @click.stop="startProfileClicked">Start Profile</v-btn>
@@ -28,16 +29,27 @@
 <script>
 import { routes } from "@/util/routes";
 import { mapActions, mapState } from "vuex";
-import { START_PROFILE } from "./util/messageTypes";
+import { START_PROFILE, IndiStatus } from "./util/messageTypes";
 
 export default {
   computed: {
-    ...mapState(["connection", "profiles"]),
+    ...mapState(["connection", "indiStatus", "socket", "profiles"]),
     connected() {
       return this.connection?.connected;
     },
-    ekosStarted() {
-      return this.connection?.online;
+    ekosStartedClass() {
+      switch (this.indiStatus) {
+        case IndiStatus.Idle:
+        case IndiStatus.Pending: {
+          return "orangeFilledIn";
+        }
+        case IndiStatus.Success: {
+          return "greenFilledIn";
+        }
+        case IndiStatus.Error: {
+          return "redFilledIn"
+        }
+      }
     },
   },
   data: () => ({

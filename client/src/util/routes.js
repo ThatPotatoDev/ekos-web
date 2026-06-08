@@ -49,13 +49,13 @@ const routes = [{
   path: "/livestack",
   icon: "mdi-camera",
   component: LiveStack,
-},*/{
+},{
   name: "ControlPanel",
   label: "Control Panel",
   path: "/controlpanel",
   icon: "mdi-cogs",
   component: ControlPanel,
-},{
+},*/{
   name: "Settings",
   path: "/settings",
   icon: "mdi-cog",

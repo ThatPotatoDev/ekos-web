@@ -31,14 +31,25 @@
     </div>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
-    <!-- TODO: see if rules are necessary  -->
-    <v-form class="ma-1" validate-on="blur">
+    <v-form class="ma-1">
       <v-row density="compact">
         <v-col>
           <v-select 
             v-model="captureSettings.captureTypeS" 
             :items="['Light', 'Dark', 'Bias', 'Flat']" 
             label="Frame Type" hide-details
+          />
+        </v-col>
+        <v-col v-if="false">
+          <!-- binning eventually -->
+        </v-col>
+      </v-row>
+      <v-row density="compact">
+        <v-col>
+          <v-select 
+            v-model="captureSettings.captureFormatS" 
+            :items="deviceInfo.ccd.captureFormats" 
+            label="Capture Format" hide-details
           />
         </v-col>
         <v-col>
@@ -68,13 +79,13 @@
         <v-col>
           <non-linear-number-input
           v-model="captureSettings.captureExposureN"
-          label="Exposure (sec)" :rules="[val => {if (val > 0) return true; return 'Exposure must be > 0'}]"
+          label="Exposure (sec)"
         />
         </v-col>
         <v-col>
           <v-select v-if="deviceInfo.ccd.isoList != null"
             v-model="captureSettings.captureISOS" 
-            :items="capture.isoList" 
+            :items="deviceInfo.ccd.isoList" 
             label="ISO"
           />
           <v-number-input v-else-if="deviceInfo.ccd.usesGain"
@@ -116,7 +127,7 @@ export default {
       "captureTypeS", "FilterPosCombo",
       "captureExposureN", "captureCountN",
       "captureISOS", "captureGainN",
-      "captureEncodingS"
+      "captureFormatS", "captureEncodingS"
     ],
   }),
   computed: {
