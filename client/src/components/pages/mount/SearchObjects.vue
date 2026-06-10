@@ -11,8 +11,8 @@
           </v-btn>
         </div>
       </v-list-item>
-      <v-list-item>
-        <v-text-field v-if="target"
+      <v-list-item v-if="target">
+        <v-text-field
           v-model="target.display"
           label="Target"
           hide-details readonly

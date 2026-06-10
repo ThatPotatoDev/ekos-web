@@ -1,5 +1,8 @@
 export const DAEMON = "daemon";
 export const IMAGE_DATA = 'image_data';
+export const CLIENT_GET_SETTINGS = 'client_get_settings';
+export const CLIENT_SAVE_SETTINGS = 'client_save_settings';
+
 export const NEW_GPS_STATE = 'new_gps_state';
 
 export const LIVESTACK_IMAGE = 'livestack_image';
@@ -157,12 +160,24 @@ export const ASTRO_GET_SKYPOINT_IMAGE = "astro_get_skypoint_image";
 export const ASTRO_GET_OBJECTS_OBSERVABILITY = "astro_get_objects_observability";
 export const ASTRO_GET_OBJECTS_RISESET = "astro_get_objects_riseset";
 
+export const TRAIN_GET_ALL = "train_get_all";
+export const TRAIN_GET_PROFILES = "train_get_profiles";
+export const TRAIN_UPDATE = "train_update";
+export const TRAIN_SET = "train_set";
+export const TRAIN_ADD = "train_add";
+export const TRAIN_DELETE = "train_delete";
+export const TRAIN_RESET = "train_reset";
+export const TRAIN_CONFIGURATION_REQUESTED = "train_configuration_requested";
+export const TRAIN_ACCEPT = "train_accept";
+export const TRAIN_SETTINGS_GET = "train_settings_get";
+
 export const IndiStatus = Object.freeze({
     Idle: 0,
     Pending: 1,
     Success: 2,
     Error: 3
 });
+
 export const SkyObject = Object.freeze({
     STAR: 0,
     CATALOG_STAR: 1,
@@ -188,3 +203,14 @@ export const SkyObject = Object.freeze({
     NUMBER_OF_KNOWN_TYPES: 21,
     TYPE_UNKNOWN: 255
 });
+
+export const OpticalTrains = Object.freeze([
+    "primary",
+
+    "capture",
+    "focus",
+    "mount",
+    "guide",
+    "align",
+    "darklibrary"
+]);

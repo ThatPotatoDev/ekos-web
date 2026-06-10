@@ -1,17 +1,17 @@
 <template>
   <div class="pa-2">
     <v-img class="ma-1" v-if="preview.image" :src="preview.image.image" :max-width="Math.min(preview.image.width, 800)"></v-img>
-    <h2>{{mount.target}}</h2>
+    <div class="text-headline-large">{{ mount.target }}</div>
     <LastNotification />
     <v-divider class="mb-2"></v-divider>
     <ul>
       <li>
-        GPS: {{gpsMode}}
+        GPS: {{ gpsMode }}
         <template v-if="gps.mode >= 2">
           <ul>
-            <li>Latitude: {{gps.lat.toFixed(3)}}</li>
-            <li>Longitude: {{gps.lon.toFixed(3)}}</li>
-            <li v-if="gps.mode >= 3">Altitude: {{gps.alt.toFixed(2)}}m</li>
+            <li>Latitude: {{ gps.lat.toFixed(3) }}</li>
+            <li>Longitude: {{ gps.lon.toFixed(3) }}</li>
+            <li v-if="gps.mode >= 3">Altitude: {{ gps.alt.toFixed(2) }}m</li>
           </ul>
         </template>
       </li>

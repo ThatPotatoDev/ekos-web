@@ -97,7 +97,9 @@
     <v-divider class="ma-2"></v-divider>
     <div class="text-headline-small">{{ polar.stage }}</div>
 
-    <div v-if="polar.vector">
+    <div v-if="(polar.stage === 'Select Star' || polar.stage == 'Refreshing') 
+        && (polar.vector || polar.updatedError)"
+    >
       Measured:
       <v-row no-gutters v-if="polar.vector">
         <v-col>Err: {{ dms(polar.vector.error) }}</v-col>
@@ -167,7 +169,7 @@
         </v-list-item>
       </v-list>
     </div>
-    <div v-else-if="align.settings.pAHManualSlew && polar.stage.endsWith(' Rotation')">
+    <div v-else-if="polar.stage.endsWith(' Rotation') && align.settings.pAHManualSlew">
       <v-list class="no-v-list-background">
         <v-list-item>
           <v-btn block @click="onClickPASlewDone">Slew Done</v-btn>
@@ -182,7 +184,7 @@
   </div>
 </template>
 <script setup>
-import { hms, hmsFromH, dms } from "../../util/coords";
+import { hmsFromH, dms } from "../../util/coords";
 </script>
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
@@ -218,13 +220,14 @@ export default {
   computed: {
     ...mapState([
       "align", "capture",
-      "polar",
-      "deviceInfo"
+      "polar", "deviceInfo",
+      "clientSettings"
     ]),
     ...mapState({
       settings: state => state.alignSettings,
       polarVector: state => state.polar?.vector,
-      polarUpdatedErr: state => state.polar?.updatedError
+      polarUpdatedAltErr: state => state.polar?.updatedALTError,
+      polarUpdatedAzErr: state => state.polar?.updatedAZError
     }),
     alignText() {
       if (this.align.status === 'Idle' || this.align.status === 'Failed'
@@ -245,7 +248,7 @@ export default {
   watch: {
     align: {
       deep: true,
-      handler(val, oldVal) {
+      handler(val) {
         if (!val?.settings) return;
         Object.keys(val.settings).forEach(k => {
           if (this.modifiableOptions.includes(k)) {
@@ -261,45 +264,52 @@ export default {
       if (!nv) return;
       this.arrows();
     },
-    polarUpdatedErr(nv) {
+    polarUpdatedAltErr(nv) {
       if (!nv) return;
-      this.arrows();
+      this.arrows(["alt"]);
+    },
+    polarUpdatedAzErr(nv) {
+      if (!nv) return;
+      this.arrows(["az"]);
     }
   },
   mounted() {
-    if (this.polarVector || this.polarUpdatedErr) this.arrows();
+    if (this.polar.vector || this.polar.updatedError) this.arrows();
     this.sendMsg([ALIGN_GET_ALL_SETTINGS]);
   },
   methods: {
     ...mapActions([
       "sendMsg",
     ]),
-    arrows() {
-      const altError = (this.polar?.updatedALTError ?? this.polar.vector?.altError) ?? 0;
-      const azError = (this.polar?.updatedAZError ?? this.polar.vector?.azError) ?? 0;
+    arrows(axises = ["alt", "az"]) {
+      const altError = (this.polar.updatedALTError ?? this.polar.vector?.altError) ?? 0;
+      const azError = (this.polar.updatedAZError ?? this.polar.vector?.azError) ?? 0;
 
-      const minError = 20.0 / 3600.0;  // 20 arcsec
+      const minError = this.clientSettings.minPAError / 3600.0;  // 20 arcsec
 
       // these constants are worked out so a 10' error gives a size of 50
       // and a 1' error gives a size of 20.
       const largeErr = 10.0 / 60.0, smallErr = 1.0 / 60.0,
        largeSize = "large", smallSize = "small";
-      let size = "medium";      
+      let size = "";      
       // alt
       let absError = Math.abs(altError);
       if (absError > largeErr)
         size = largeSize;
       else if (absError < smallErr)
         size = smallSize;
+      else size = "medium"
 
-      this.arrowAltPA.size = size;
-      if (altError > minError) {
-        // downArrow(altPainter, size, size);
-        this.arrowAltPA.icon = "mdi-arrow-down-bold";
-      } else if (altError < -minError) {
-        // upArrow(altPainter, size, size);
-        this.arrowAltPA.icon = "mdi-arrow-up-bold";
-      } else this.arrowAltPA.icon = "";
+      if (axises.includes("alt")) {
+        this.arrowAltPA.size = size;
+        if (altError > minError) {
+          // downArrow(altPainter, size, size);
+          this.arrowAltPA.icon = "mdi-arrow-down-bold";
+        } else if (altError < -minError) {
+          // upArrow(altPainter, size, size);
+          this.arrowAltPA.icon = "mdi-arrow-up-bold";
+        } else this.arrowAltPA.icon = "";
+      }
 
       // az
       absError = Math.abs(azError);
@@ -309,14 +319,16 @@ export default {
         size = smallSize;
       else size = "medium";
 
-      this.arrowAzPA.size = size;
-      if (azError > minError) {
-        // leftArrow(azPainter, size, size);
-        this.arrowAzPA.icon = "mdi-arrow-left-bold";
-      } else if (azError < -minError) {
-        // rightArrow(azPainter, size, size);
-        this.arrowAzPA.icon = "mdi-arrow-right-bold";
-      } else this.arrowAzPA.icon = "";
+      if (axises.includes("az")) {
+        this.arrowAzPA.size = size;
+        if (azError > minError) {
+          // leftArrow(azPainter, size, size);
+          this.arrowAzPA.icon = "mdi-arrow-left-bold";
+        } else if (azError < -minError) {
+          // rightArrow(azPainter, size, size);
+          this.arrowAzPA.icon = "mdi-arrow-right-bold";
+        } else this.arrowAzPA.icon = "";
+      }
     },
     onClickAlign() {
       if (this.alignText === "Solve") {

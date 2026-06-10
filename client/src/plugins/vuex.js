@@ -48,6 +48,9 @@ import {
   DEVICE_PROPERTY_ADD,
   DEVICE_PROPERTY_GET,
   NEW_INDI_STATE,
+  CLIENT_GET_SETTINGS,
+  TRAIN_GET_ALL,
+  TRAIN_GET_PROFILES,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
 
@@ -89,7 +92,13 @@ const defaultEkosStates = {
   align: {
     status: "Idle"
   },
-  polar: { },
+  polar: {
+    stage: "Idle"
+  },
+  trains: {
+    trains: [],
+    profiles: {},
+  },
   indiStatus: 0,
   notifications: [],
   lastNotification: null,
@@ -129,6 +138,9 @@ const store = createStore({
     deviceTypeMap: new Map(),
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
     propLabelsMap: structuredClone(defaultEkosStates.propLabelsMap),
+    clientSettings: {
+      minPAError: 20,
+    },
   },
   getters: {
     mountPosition: state => {
@@ -154,8 +166,7 @@ const store = createStore({
     SOCKET_ONOPEN(state, event) {
       state.socket.connection = event.currentTarget;
       state.socket.isConnected = true;
-      this.dispatch("sendMsg", [SET_CLIENT_STATE, { state: true }]);
-      this.dispatch("sendMsg", [GET_CONNECTION]);
+      this.commit("ekos_connected")
     },
     SOCKET_ONCLOSE(state) {
       state.socket.isConnected = false
@@ -178,6 +189,11 @@ const store = createStore({
     SOCKET_RECONNECT_ERROR(state) {
       state.socket.reconnectError = true;
     },
+    [CLIENT_GET_SETTINGS](state, message) {
+      Object.keys(message.payload).forEach(k => {
+        state.clientSettings[k] = message.payload[k];
+      });
+    },
     [IMAGE_DATA](state, message) {
       const shape = message.payload.resolution.split('x');
 
@@ -193,6 +209,9 @@ const store = createStore({
           break;
         case "+F":
           state.focus.image = message.payload;
+          break;
+        case "+D":
+          // dark library
           break;
         default:
           state.preview.image = message.payload;
@@ -213,6 +232,7 @@ const store = createStore({
             ]
           }]);
           this.dispatch("sendMsg", [GET_STATES]);
+          this.dispatch("sendMsg", [TRAIN_GET_ALL]);
         } else {
           // Still connected to KStars, but Ekos was closed. Reset states to default.
           this.dispatch("reset");
@@ -327,7 +347,6 @@ const store = createStore({
       state.currObjId = 0;
 
       const removeSet = new Set();
-
       for (const raw of message.payload) {
         const base = raw.split(" (")[0];
         removeSet.add(base);
@@ -336,7 +355,7 @@ const store = createStore({
       const map = new Map();
 
       for (const raw of message.payload) {
-        if (removeSet.has(raw)) continue;
+        if (raw.includes(" (") && removeSet.has(raw.split(" (")[0])) continue;
         map.set(raw, {
           id: state.currObjId++,
           primary: raw,
@@ -352,9 +371,12 @@ const store = createStore({
     [ASTRO_GET_DESIGNATIONS](state, message) {
       const map = state.gotoObjects;
 
+      const removeSet = new Set();
+
       for (const obj of message.payload) {
         const primary = obj.primary;
         const designations = obj.designations.filter(d => d !== primary);
+        designations.forEach(d => removeSet.add(d));
         const display =
           designations.length > 0
             ? `${primary} (${designations.join(", ")})`
@@ -366,6 +388,9 @@ const store = createStore({
           display
         });
       }
+
+      removeSet.forEach(r => map.delete(r));
+
     },
     [ASTRO_SEARCH_OBJECTS](state, message) {
       const map = state.gotoObjects;
@@ -380,6 +405,13 @@ const store = createStore({
     [LIVESTACK_IMAGE](state, message) {
       state.livestack.image = message.payload;
     },
+    [TRAIN_GET_ALL](state, message) {
+      state.trains.trains = message.payload;
+    },
+    [TRAIN_GET_PROFILES](state, message) {
+      state.trains.profiles = message.payload;
+    },
+
   },
   actions: {
     reset: ({ state }) => {

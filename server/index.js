@@ -1,11 +1,12 @@
 import http from 'http';
 import WebSocket from 'ws';
-import ReconnectingWebSocket from 'reconnecting-websocket';
 import url from 'url';
 import nodeGpsd from 'node-gpsd';
 import nodeStatic from 'node-static';
 import enableGracefulShutdown from 'server-graceful-shutdown';
 import { handleDaemonMsg } from './daemon.js';
+import { writeFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 
 const debug = process.env.EKOS_WEB_DEBUG === "1";
 
@@ -17,6 +18,16 @@ const mediaServer = new WebSocket.Server({ noServer: true });
 const cloudServer = new WebSocket.Server({ noServer: true });
 // This one listens for messages from the web client.
 const messageUser = new WebSocket.Server({ noServer: true });
+
+const clientSettingsPath = "clientSettings.json";
+let clientSettings = {};
+try {
+  clientSettings = JSON.parse(readFileSync(clientSettingsPath, "utf8"));
+} catch (error) {
+  if (error.code === 'ENOENT') writeFile(clientSettingsPath, '{}', 'utf8');
+  else throw error;
+}
+console.log(clientSettings);
 
 // The signals we want to handle
 // NOTE: although it is tempting, the SIGKILL signal (9) cannot be intercepted and handled
@@ -121,6 +132,16 @@ messageUser.on("connection", (userWs) => {
     if (msgObj.type === "daemon") {
       handleDaemonMsg(msgObj.payload);
       return;
+    } else if (msgObj.type === "client_save_settings") {
+      clientSettings = msgObj.payload;
+      writeFile(clientSettingsPath, JSON.stringify(msgObj.payload), "utf8")
+      return;
+    } else if (msgObj.type.startsWith("media_")) {
+      mediaServer.clients.forEach(c => {
+        msgObj.type = msgObj.type.slice("media_".length);
+        sendJSON(c, msgObj);
+      });
+      return;
     }
 
     // Every message we get from the client should be forwarded to Ekos.
@@ -134,7 +155,7 @@ messageUser.on("connection", (userWs) => {
     sendJSON(userWs, { type: key, payload: val });
   });
   lastMessages.delete("ekos_connected");
-
+  sendJSON(userWs, {type: "client_get_settings", payload: clientSettings});
   // Tell Ekos to send us images.
   mediaServer.clients.forEach(c => {
     setupMediaServerOptions(c);
@@ -196,7 +217,7 @@ mediaServer.on("connection", (ws) => {
     let imgStart = msg.indexOf(0xff, metaEnd + 1);
     const raw = Buffer.from(msg.subarray(imgStart));
     const encoded = raw.toString('base64');
-    data.payload['image'] = "data:image/jpeg;base64," + encoded;
+    data.payload['image'] = `data:image/${data.payload.ext};base64,${encoded}`;
 
     messageUser.clients.forEach(c => {
       sendJSON(c, data);

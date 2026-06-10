@@ -5,7 +5,7 @@
       <v-toolbar-title>Ekos Web</v-toolbar-title>
       <v-icon icon="mdi-cloud" height="24" class="mr-2" :class="socket.isConnected ? 'greenFilledIn' : 'redFilledIn'"/>
       <v-icon icon="mdi-laptop" height="24" class="mr-2" :class="connected ? 'greenFilledIn' : 'redFilledIn'"/>
-      <v-icon icon="mdi-telescope" height="24" class="mr-2" :class="connection?.online ? ekosStartedClass : 'redFilledIn'"/>
+      <v-icon icon="mdi-telescope" height="24" class="mr-2" :class="ekosStartedClass"/>
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" app>
       <v-list dense>
@@ -35,11 +35,16 @@ import { START_PROFILE, IndiStatus } from "./util/messageTypes";
 
 export default {
   computed: {
-    ...mapState(["connection", "indiStatus", "socket", "profiles"]),
+    ...mapState([
+      "connection", "indiStatus", 
+      "socket", "profiles"
+    ]),
     connected() {
       return this.connection?.connected;
     },
     ekosStartedClass() {
+      if (!this.connection?.connected) return "redFilledIn"
+      if (this.connection?.online) return "greenFilledIn";
       switch (this.indiStatus) {
         case IndiStatus.Idle:
         case IndiStatus.Pending: {

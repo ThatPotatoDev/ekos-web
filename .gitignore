@@ -2,6 +2,7 @@
 node_modules
 /dist
 server/static
+server/clientSettings.json
 client/dist
 livestack
 
