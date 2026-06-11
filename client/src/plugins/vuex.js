@@ -51,6 +51,7 @@ import {
   CLIENT_GET_SETTINGS,
   TRAIN_GET_ALL,
   TRAIN_GET_PROFILES,
+  GET_SCOPES,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
 
@@ -99,10 +100,12 @@ const defaultEkosStates = {
     trains: [],
     profiles: {},
   },
+  scopes: [],
   indiStatus: 0,
   notifications: [],
   lastNotification: null,
   devices: {},
+  interfaceDevices: [],
   livestack: {
     messages: [],
     image: null,
@@ -134,13 +137,13 @@ const store = createStore({
       lat: null,
       lon: null,
     },
+    clientSettings: {
+      minPAError: 20,
+    },
     gotoObjects: new Map(),
     deviceTypeMap: new Map(),
     ...JSON.parse(JSON.stringify(defaultEkosStates)),
     propLabelsMap: structuredClone(defaultEkosStates.propLabelsMap),
-    clientSettings: {
-      minPAError: 20,
-    },
   },
   getters: {
     mountPosition: state => {
@@ -195,10 +198,10 @@ const store = createStore({
       });
     },
     [IMAGE_DATA](state, message) {
-      const shape = message.payload.resolution.split('x');
+      const res = message.payload.resolution.split('x');
 
-      message.payload.width = parseInt(shape[0]);
-      message.payload.height = parseInt(shape[1]);
+      message.payload.width = parseInt(res[0]);
+      message.payload.height = parseInt(res[1]);
 
       switch (message.payload.uuid) {
         case "+G":
@@ -325,10 +328,11 @@ const store = createStore({
       // console.log(message.payload)
     },
     [GET_DEVICES](state, message) {
-      for (const key in message.payload) {
-        const item = JSON.parse(JSON.stringify(message.payload[key]));
+      state.interfaceDevices = [];
+      message.payload.forEach(item => {
+        state.interfaceDevices.push(item);
         this.dispatch("sendMessage", { type: DEVICE_GET, payload: { device: item.name } });
-      }
+      });
     },
     [DEVICE_GET](state, message) {
       message.payload.properties.forEach((prop) => {
@@ -411,7 +415,9 @@ const store = createStore({
     [TRAIN_GET_PROFILES](state, message) {
       state.trains.profiles = message.payload;
     },
-
+    [GET_SCOPES](state, message) {
+      state.scopes = message.payload;
+    },
   },
   actions: {
     reset: ({ state }) => {
@@ -421,6 +427,7 @@ const store = createStore({
       Object.assign(state, JSON.parse(JSON.stringify(defaultEkosStates)));
       state.gotoObjects.clear();
       state.deviceTypeMap.clear();
+      interfaceDeviceMap.clear();
       state.propLabelsMap = structuredClone(defaultEkosStates.propLabelsMap);
       console.log("reset");
     },

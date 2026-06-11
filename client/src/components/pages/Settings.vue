@@ -23,11 +23,11 @@ import { CLIENT_SAVE_SETTINGS, DAEMON, STOP_PROFILE } from '../../util/messageTy
 import OpticalTrains from './settings/OpticalTrains.vue';
 export default {
   components: {
-    OpticalTrains
+    OpticalTrains,
   },
   computed: {
     ...mapState([
-      "connection", "clientSettings"
+      "connection", "clientSettings",
     ]),
   },
   methods: {

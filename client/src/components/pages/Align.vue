@@ -198,14 +198,8 @@ export default {
     LastNotification,
   },
   data: () => ({
-    arrowAltPA: {
-      icon: "",
-      size: "medium"
-    },
-    arrowAzPA: {
-      icon: "",
-      size: "medium"
-    },
+    arrowAltPA: { icon: "", size: "" },
+    arrowAzPA: { icon: "", size: "" },
     modifiableOptions: [
       "alignAccuracyThreshold", "alignSettlingTime",
       "alignExposure", "alignGain", "alignFilter",
@@ -285,13 +279,12 @@ export default {
       const altError = (this.polar.updatedALTError ?? this.polar.vector?.altError) ?? 0;
       const azError = (this.polar.updatedAZError ?? this.polar.vector?.azError) ?? 0;
 
-      const minError = this.clientSettings.minPAError / 3600.0;  // 20 arcsec
+      const minError = this.clientSettings.minPAError / 3600.0;  // minPAError arcsec
 
-      // these constants are worked out so a 10' error gives a size of 50
-      // and a 1' error gives a size of 20.
       const largeErr = 10.0 / 60.0, smallErr = 1.0 / 60.0,
        largeSize = "large", smallSize = "small";
-      let size = "";      
+      let size = "";     
+
       // alt
       let absError = Math.abs(altError);
       if (absError > largeErr)
@@ -303,10 +296,8 @@ export default {
       if (axises.includes("alt")) {
         this.arrowAltPA.size = size;
         if (altError > minError) {
-          // downArrow(altPainter, size, size);
           this.arrowAltPA.icon = "mdi-arrow-down-bold";
         } else if (altError < -minError) {
-          // upArrow(altPainter, size, size);
           this.arrowAltPA.icon = "mdi-arrow-up-bold";
         } else this.arrowAltPA.icon = "";
       }
@@ -322,10 +313,8 @@ export default {
       if (axises.includes("az")) {
         this.arrowAzPA.size = size;
         if (azError > minError) {
-          // leftArrow(azPainter, size, size);
           this.arrowAzPA.icon = "mdi-arrow-left-bold";
         } else if (azError < -minError) {
-          // rightArrow(azPainter, size, size);
           this.arrowAzPA.icon = "mdi-arrow-right-bold";
         } else this.arrowAzPA.icon = "";
       }
@@ -345,12 +334,12 @@ export default {
       this.sendMsg([ALIGN_SET_ALL_SETTINGS, {
         ...this.align.settings,
         ...this.settings,
-      }])
+      }]);
     },
     onClickPA() {
       if (this.textPA === "Start") {
         this.updateSettings();
-        this.sendMsg([PAH_START])
+        this.sendMsg([PAH_START]);
       } else {
         this.sendMsg([PAH_STOP]);
       }
@@ -360,15 +349,12 @@ export default {
     },
     onClickPARefresh() {
       this.updateSettings();
-      this.sendMsg([PAH_REFRESH, { value: this.settings.pAHExposure }])
+      this.sendMsg([PAH_REFRESH, { value: this.settings.pAHExposure }]);
     }
   }
 };
 </script>
 <style scoped>
-.v-expansion-panel :deep(.v-expansion-panel-text__wrapper) {
-  padding: 8px 12px 16px;
-}
 .v-input :deep(.v-input__details) {
   min-height: 0px;
   padding-top: 0px;
