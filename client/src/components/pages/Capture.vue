@@ -192,8 +192,14 @@ export default {
       handler(val) {
         if (val?.settings) {
           Object.keys(val.settings).forEach(k => {
-            if (this.modifiableOptions.indexOf(k) !== -1
-              && (this.captureSettings[k] === undefined || this.captureSettings[k] === null)) {
+            if (
+              this.modifiableOptions.indexOf(k) !== -1
+              && (
+                this.captureSettings[k] === undefined 
+                || this.captureSettings[k] === null
+                || k === "targetNameT"
+              )
+            ) {
               this.captureSettings[k] = val.settings[k];
             }
           });
