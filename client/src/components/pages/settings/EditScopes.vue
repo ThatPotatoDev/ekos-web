@@ -1,8 +1,10 @@
 <template>
+<v-expansion-panel title="Edit Scopes">
+<v-expansion-panel-text>
 <v-row density="compact">
   <v-col><v-select
     v-model="currScope" :items="scopes" hide-details
-    label="Scope" item-title="name" return-object
+    label="Scope" :item-title="i => `(${i.id}) ${i.name}`" return-object
   /></v-col>
   <v-col class="d-flex align-center">
     <v-btn min-height="40" min-width="40" variant="outlined" style="padding: 0;" 
@@ -49,8 +51,10 @@
     label="Focal length"
   /></v-col>
 </v-row>
-<div style="justify-self: center;"><v-btn width="150" @click.stop="saveScope">Save</v-btn></div>
+<div style="justify-self: center;"><v-btn variant="outlined" width="150" @click.stop="saveScope">Save</v-btn></div>
 </div>
+</v-expansion-panel-text>
+</v-expansion-panel>
 </template>
 <script>
 import { mapState } from 'vuex';
@@ -58,27 +62,34 @@ import { ADD_SCOPE, DELETE_SCOPE, UPDATE_SCOPE } from '../../../util/messageType
 import { mapActions } from 'vuex/dist/vuex.cjs.js';
 
 const blankScope = {
-  //todo
+  vendor: "", model: "", type: "",
+  aperture: 0, focal_length: 0,
 }
 
 export default {
   data: () => ({
-    currScope: {},
-    awaitingScopeAdd: false,
+    currScope: null,
+    awaitingScopeId: null,
   }),
   computed: {
     ...mapState([
       "scopes"
     ]),
   },
-  mounted() {
-    this.currScope = this.scopes[0];
-  },
   watch: {
     scopes(v) {
-      if (!this.awaitingScopeAdd) return;
-      this.currScope = v[v.length - 1];
-      this.awaitingScopeAdd = false;
+      if (this.awaitingScopeId === null) return;
+      let scope = null;
+
+      if (this.awaitingScopeId === "-1") 
+        scope = v[v.length - 1];
+      else 
+        scope = v.find(s => s.id === this.awaitingScopeId);
+
+      if (scope) { 
+        this.currScope = scope;
+        this.awaitingScopeId = null;
+      }
     }
   },
   methods: {
@@ -87,7 +98,7 @@ export default {
     ]),
     addScope() {
       this.sendMsg([ADD_SCOPE, blankScope]);
-      this.awaitingScopeAdd = true;
+      this.awaitingScopeId = "-1";
     },
     deleteScope() {
       this.sendMsg([DELETE_SCOPE, { id: this.currScope.id }]);
@@ -102,7 +113,7 @@ export default {
     },
     saveScope() {
       this.sendMsg([UPDATE_SCOPE, this.currScope]);
-      this.awaitingScopeAdd = true; //FIXME: updated scope isnt always last
+      this.awaitingScopeId = this.currScope.id;
     },
   },
 }

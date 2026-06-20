@@ -66,8 +66,7 @@ export default {
   methods: {
     ...mapActions(["sendMsg", "findDeviceDetails"]),
     startProfileClicked() {
-      this.sendMsg([START_PROFILE, {name: this.profiles.selectedProfile} ])
-      this.findDeviceDetails();
+      this.sendMsg([START_PROFILE, {name: this.profiles.selectedProfile} ]);
     }
   }
 };

@@ -48,14 +48,14 @@
         <v-col>
           <v-select 
             v-model="captureSettings.captureFormatS" 
-            :items="deviceInfo.ccd.captureFormats" 
+            :items="deviceInfo.ccd.formatsList" 
             label="Capture Format" hide-details
           />
         </v-col>
         <v-col>
           <v-select 
             v-model="captureSettings.captureEncodingS" 
-            :items="deviceInfo.ccd.transferFormats" 
+            :items="['FITS', 'Native', 'XISF']" 
             label="File Format" hide-details
           />
         </v-col>
@@ -67,10 +67,10 @@
             label="Count" :min="1" :max="100000" hide-details
           />
         </v-col>
-        <v-col v-if="deviceInfo.ccd.filters.length !== 0">
+        <v-col v-if="deviceInfo.ccd.filtersList.length !== 0">
           <v-select
             v-model="captureSettings.FilterPosCombo" 
-            :items="deviceInfo.ccd.filters" 
+            :items="deviceInfo.ccd.filtersList" 
             label="Filter" hide-details
           />
         </v-col>
@@ -88,7 +88,7 @@
             :items="deviceInfo.ccd.isoList" 
             label="ISO" hide-details
           />
-          <v-number-input v-else-if="deviceInfo.ccd.usesGain"
+          <v-number-input v-else
             v-model="captureSettings.captureGainN" :rules="[val => {if (val >= 1) return true; return 'Gain must be >= 1'}]"
             label="Gain" :step="50" :min="1" :max="10000" hide-details
           />

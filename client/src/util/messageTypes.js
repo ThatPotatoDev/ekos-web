@@ -98,9 +98,15 @@ export const FOCUS_SET_ALL_SETTINGS = "focus_set_all_settings";
 export const FOCUS_GET_ALL_SETTINGS = "focus_get_all_settings";
 export const FOCUS_SET_CROSSHAIR = "focus_set_crosshair";
 
-export const GUIDE_START = 'guide_start';
-export const GUIDE_STOP = 'guide_stop';
-export const GUIDE_CLEAR = 'guide_clear';
+export const GUIDE_START = "guide_start";
+export const GUIDE_CAPTURE = "guide_capture";
+export const GUIDE_LOOP = "guide_loop";
+export const GUIDE_STOP = "guide_stop";
+export const GUIDE_CLEAR = "guide_clear";
+export const GUIDE_REPORT = "guide_report";
+export const GUIDE_SET_ALL_SETTINGS = "guide_set_all_settings";
+export const GUIDE_GET_ALL_SETTINGS = "guide_get_all_settings";
+export const GUIDE_SET_CALIBRATION_SETTINGS = "guide_set_calibration_settings";
 
 export const ALIGN_SOLVE = "align_solve";
 export const ALIGN_STOP = "align_stop";
@@ -172,71 +178,89 @@ export const TRAIN_ACCEPT = "train_accept";
 export const TRAIN_SETTINGS_GET = "train_settings_get";
 
 export const IndiStatus = Object.freeze({
-    Idle: 0,
-    Pending: 1,
-    Success: 2,
-    Error: 3
+  Idle: 0,
+  Pending: 1,
+  Success: 2,
+  Error: 3
 });
 
 export const SkyObject = Object.freeze({
-    STAR: 0,
-    CATALOG_STAR: 1,
-    PLANET: 2,
-    OPEN_CLUSTER: 3,
-    GLOBULAR_CLUSTER: 4,
-    GASEOUS_NEBULA: 5,
-    PLANETARY_NEBULA: 6,
-    SUPERNOVA_REMNANT: 7,
-    GALAXY: 8,
-    COMET: 9,
-    ASTEROID: 10,
-    CONSTELLATION: 11,
-    MOON: 12,
-    ASTERISM: 13,
-    GALAXY_CLUSTER: 14,
-    DARK_NEBULA: 15,
-    QUASAR: 16,
-    MULT_STAR: 17,
-    RADIO_SOURCE: 18,
-    SATELLITE: 19,
-    SUPERNOVA: 20,
-    NUMBER_OF_KNOWN_TYPES: 21,
-    TYPE_UNKNOWN: 255
+  STAR: 0,
+  CATALOG_STAR: 1,
+  PLANET: 2,
+  OPEN_CLUSTER: 3,
+  GLOBULAR_CLUSTER: 4,
+  GASEOUS_NEBULA: 5,
+  PLANETARY_NEBULA: 6,
+  SUPERNOVA_REMNANT: 7,
+  GALAXY: 8,
+  COMET: 9,
+  ASTEROID: 10,
+  CONSTELLATION: 11,
+  MOON: 12,
+  ASTERISM: 13,
+  GALAXY_CLUSTER: 14,
+  DARK_NEBULA: 15,
+  QUASAR: 16,
+  MULT_STAR: 17,
+  RADIO_SOURCE: 18,
+  SATELLITE: 19,
+  SUPERNOVA: 20,
+  NUMBER_OF_KNOWN_TYPES: 21,
+  TYPE_UNKNOWN: 255
 });
 
 export const OpticalTrains = Object.freeze([
-    "primary",
+  "primary",
 
-    "capture",
-    "focus",
-    "mount",
-    "guide",
-    "align",
-    "darklibrary"
+  "capture",
+  "focus",
+  "mount",
+  "guide",
+  "align",
+  "darklibrary"
 ]);
 
 export const INDIInterfaces = Object.freeze({
-  GENERAL_INTERFACE       : 0,         /**< Default interface for all INDI devices */
-  TELESCOPE_INTERFACE     : (1 << 0),  /**< Telescope interface, must subclass INDI::Telescope */
-  CCD_INTERFACE           : (1 << 1),  /**< CCD interface, must subclass INDI::CCD */
-  GUIDER_INTERFACE        : (1 << 2),  /**< Guider interface, must subclass INDI::GuiderInterface */
-  FOCUSER_INTERFACE       : (1 << 3),  /**< Focuser interface, must subclass INDI::FocuserInterface */
-  FILTER_INTERFACE        : (1 << 4),  /**< Filter interface, must subclass INDI::FilterInterface */
-  DOME_INTERFACE          : (1 << 5),  /**< Dome interface, must subclass INDI::Dome */
-  GPS_INTERFACE           : (1 << 6),  /**< GPS interface, must subclass INDI::GPS */
-  WEATHER_INTERFACE       : (1 << 7),  /**< Weather interface, must subclass INDI::Weather */
-  AO_INTERFACE            : (1 << 8),  /**< Adaptive Optics Interface */
-  DUSTCAP_INTERFACE       : (1 << 9),  /**< Dust Cap Interface */
-  LIGHTBOX_INTERFACE      : (1 << 10), /**< Light Box Interface */
-  DETECTOR_INTERFACE      : (1 << 11), /**< Detector interface, must subclass INDI::Detector */
-  ROTATOR_INTERFACE       : (1 << 12), /**< Rotator interface, must subclass INDI::RotatorInterface */
-  SPECTROGRAPH_INTERFACE  : (1 << 13), /**< Spectrograph interface */
-  CORRELATOR_INTERFACE    : (1 << 14), /**< Correlators (interferometers) interface */
-  AUX_INTERFACE           : (1 << 15), /**< Auxiliary interface */
-  OUTPUT_INTERFACE        : (1 << 16), /**< Digital Output (e.g. Relay) interface */
-  INPUT_INTERFACE         : (1 << 17), /**< Digital/Analog Input (e.g. GPIO) interface */
-  POWER_INTERFACE         : (1 << 18), /**< Power Controller interface */
-  IMU_INTERFACE           : (1 << 19), /**< Intertial Measurement Unit interface */
-  PAC_INTERFACE           : (1 << 20), /**< Polar Alignment Correction interface, must subclass INDI::PACInterface */
-  SENSOR_INTERFACE        : (1 << 13) | (1 << 11) | (1 << 14)
+  GENERAL_INTERFACE: 0,         /**< Default interface for all INDI devices */
+  TELESCOPE_INTERFACE: (1 << 0),  /**< Telescope interface, must subclass INDI::Telescope */
+  CCD_INTERFACE: (1 << 1),  /**< CCD interface, must subclass INDI::CCD */
+  GUIDER_INTERFACE: (1 << 2),  /**< Guider interface, must subclass INDI::GuiderInterface */
+  FOCUSER_INTERFACE: (1 << 3),  /**< Focuser interface, must subclass INDI::FocuserInterface */
+  FILTER_INTERFACE: (1 << 4),  /**< Filter interface, must subclass INDI::FilterInterface */
+  DOME_INTERFACE: (1 << 5),  /**< Dome interface, must subclass INDI::Dome */
+  GPS_INTERFACE: (1 << 6),  /**< GPS interface, must subclass INDI::GPS */
+  WEATHER_INTERFACE: (1 << 7),  /**< Weather interface, must subclass INDI::Weather */
+  AO_INTERFACE: (1 << 8),  /**< Adaptive Optics Interface */
+  DUSTCAP_INTERFACE: (1 << 9),  /**< Dust Cap Interface */
+  LIGHTBOX_INTERFACE: (1 << 10), /**< Light Box Interface */
+  DETECTOR_INTERFACE: (1 << 11), /**< Detector interface, must subclass INDI::Detector */
+  ROTATOR_INTERFACE: (1 << 12), /**< Rotator interface, must subclass INDI::RotatorInterface */
+  SPECTROGRAPH_INTERFACE: (1 << 13), /**< Spectrograph interface */
+  CORRELATOR_INTERFACE: (1 << 14), /**< Correlators (interferometers) interface */
+  AUX_INTERFACE: (1 << 15), /**< Auxiliary interface */
+  OUTPUT_INTERFACE: (1 << 16), /**< Digital Output (e.g. Relay) interface */
+  INPUT_INTERFACE: (1 << 17), /**< Digital/Analog Input (e.g. GPIO) interface */
+  POWER_INTERFACE: (1 << 18), /**< Power Controller interface */
+  IMU_INTERFACE: (1 << 19), /**< Intertial Measurement Unit interface */
+  PAC_INTERFACE: (1 << 20), /**< Polar Alignment Correction interface, must subclass INDI::PACInterface */
+  SENSOR_INTERFACE: (1 << 13) | (1 << 11) | (1 << 14)
+});
+
+export const TrainSettings = Object.freeze({
+  Capture: 0,
+  Focus: 1,
+  Mount: 2,
+  Align: 3,
+  Guide: 4,
+  Observatory: 5,
+  Scheduler: 6,
+  Analyze: 7,
+  DarkLibrary: 8
+});
+
+export const GuiderType = Object.freeze({
+  GUIDE_INTERNAL: 0,
+  GUIDE_PHD2: 1,
+  GUIDE_LINGUIDER: 2
 });

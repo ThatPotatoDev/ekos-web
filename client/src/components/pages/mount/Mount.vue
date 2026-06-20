@@ -2,36 +2,44 @@
   <div class="pa-2">
     <div class="text-headline-large">Mount</div>
     <v-divider class="mb-2" />
-    <div class="text-headline-small">{{mount.status}}</div>
+    <div class="text-headline-small">{{ mount.status }}</div>
     <SkyMap :center="mountPosition" />
+    <v-divider class="mb-2 mt-2" />
+    <li>RA: {{ hms(mount.ra) ?? '?' }}</li>
+    <li>DE: {{ dms(mount.de, true) ?? '?' }}</li>
+    <li>{{ mount.meridianFlipText ?? '?'}}</li>
+    <li>Pier Side: {{ mount.pierSide != undefined ? pierSide : '?' }}</li>
     <LastNotification />
     <v-divider class="mb-2" />
     <v-list class="no-v-list-background">
       <v-list-item>
         <v-btn block
-          :disabled="this.mount.status === 'Idle' || this.mount.status === 'Tracking'"
+          :disabled="mount.status === 'Idle' || mount.status === 'Tracking'"
           @click="mountAbort"
         >Abort</v-btn>
       </v-list-item>
       <v-list-item>
-        <v-btn block :disabled="parkButtonText == 'Parking'" @click="togglePark">{{parkButtonText}}</v-btn>
+        <v-btn block :disabled="parkButtonText === 'Parking'" @click="togglePark">{{ parkButtonText }}</v-btn>
       </v-list-item>
       <v-list-item>
         <v-btn block
           @click="toggleTracking"
-          :disabled="this.mount.status !== 'Idle' && this.mount.status !== 'Tracking'"
-        >{{trackingButtonText}}</v-btn>
+          :disabled="mount.status !== 'Idle' && mount.status !== 'Tracking'"
+        >{{ trackingButtonText }}</v-btn>
       </v-list-item>
     </v-list>
     <SearchObjects />
     <MoveAxis />
   </div>
 </template>
+<script setup>
+import { hms, dms } from "@/util/coords.js";
+</script>
 <script>
-import SkyMap from "./mount/SkyMap.vue";
-import SearchObjects from "./mount/SearchObjects.vue";
-import MoveAxis from "./mount/MoveAxis.vue";
-import LastNotification from "@/components/common/LastNotification.vue";
+import SkyMap from "./SkyMap.vue";
+import SearchObjects from "./SearchObjects.vue";
+import MoveAxis from "./MoveAxis.vue";
+import LastNotification from "../../common/LastNotification.vue";
 import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
@@ -44,6 +52,7 @@ export default {
   computed: {
     ...mapGetters([
       "mountPosition",
+      "pierSide"
     ]),
     ...mapState([
       "mount",

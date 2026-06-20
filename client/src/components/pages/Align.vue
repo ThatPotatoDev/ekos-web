@@ -58,17 +58,17 @@
               :items="deviceInfo.ccd.isoList" 
               label="ISO" hide-details
             />
-            <v-number-input v-else-if="deviceInfo.ccd.usesGain"
+            <v-number-input v-else
               v-model="settings.alignGain" :rules="[val => { return (val >= 1) ? true : false}]"
               label="Gain" :step="50" :min="1" :max="10000" hide-details
             />
           </v-col>
         </v-row>
-        <v-row v-if="deviceInfo.ccd.filters.length !== 0" density="compact">
+        <v-row v-if="deviceInfo.ccd.filtersList.length !== 0" density="compact">
           <v-col>
             <v-select
               v-model="settings.alignFilter" 
-              :items="deviceInfo.ccd.filters" 
+              :items="deviceInfo.ccd.filtersList" 
               :disabled="settings.alignUseCurrentFilter"
               label="Filter" hide-details
             >
@@ -93,94 +93,110 @@
       </v-list-item>
     </v-list>
     <v-divider class="mb-2"></v-divider>
+    <!-- Polar -->
     <div class="text-headline-medium">Polar Alignment</div>
-    <v-divider class="ma-2"></v-divider>
-    <div class="text-headline-small">{{ polar.stage }}</div>
+    <v-divider class="ma-2" />
+    <div v-if="polar.enabled">
+      <div class="text-headline-small">{{ polar.stage }}</div>
+  
+      <div v-if="(polar.stage === 'Select Star' || polar.stage == 'Refreshing') 
+          && (polar.vector || polar.updatedError)"
+      >
+        Measured:
+        <v-row no-gutters v-if="polar.vector">
+          <v-col>Err: {{ dms(polar.vector.error) }}</v-col>
+          <v-col>Alt: {{ dms(polar.vector.altError) }}</v-col>
+          <v-col>Az: {{ dms(polar.vector.azError) }}</v-col>
+        </v-row>
+        <div v-if="polar.updatedError">Updated:</div>
+        <v-row no-gutters v-if="polar.updatedError">
+          <v-col>Err: {{ dms(polar.updatedError) }}</v-col>
+          <v-col>Alt: {{ dms(polar.updatedALTError) }}</v-col>
+          <v-col>Az: {{ dms(polar.updatedAZError) }}</v-col>
+        </v-row>
+        <v-row no-gutters v-if="polar.vector || polar.updatedError">
+          <v-col />
+          <v-col><v-icon :icon="arrowAltPA.icon" :size="arrowAltPA.size" /></v-col>
+          <v-col><v-icon :icon="arrowAzPA.icon" :size="arrowAzPA.size" /></v-col>
+        </v-row>
+        <v-divider class="mb-2 mt-2" />
+      </div>
+      <p> {{ polar.message }} </p>
+      <v-divider class="mb-2" />
+      <div v-if="polar.stage === 'Idle'">
+        <v-row density="compact">
+          <v-col>
+            <v-select 
+              v-model="settings.pAHDirection" 
+              :items="['East', 'West']" 
+              label="Direction" hide-details
+            />
+          </v-col>
+          <v-col>
+            <v-number-input
+              v-model="settings.pAHRotation" 
+              label="Rotation magnitude" suffix="&deg;" :step="15" :min="15" :max="60" hide-details
+            />
+          </v-col>
+        </v-row>
+        <v-row density="compact">
+          <v-col>
+            <v-select
+              v-model="settings.pAHMountSpeed"
+              :items="deviceInfo.mount.slewRates"
+              label="Speed"
+              :item-title="(item) => item.label != item.name ? `(${item.name}) ${item.label}` : item.label"
+              item-value="label"
+            />
+          </v-col>
+          <v-col>
+            <v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" />
+          </v-col>
+        </v-row>
+      </div>
+      <div v-else-if="polar.stage === 'Select Star'">
+        <v-number-input
+          v-model="settings.pAHExposure" 
+          label="Refresh Exposure" :min="1" :max="30"
+        />
+        <!-- TODO: eventally implement other refresh algos? -->
+        <v-select 
+          v-model="settings.pAHRefreshAlgorithm" 
+          :items="['Plate Solve'/*,'Move Star','Move Star & Calc Error'*/]"
+          label="Direction" 
+        />
+        <v-list class="no-v-list-background">
+          <v-list-item>
+            <v-btn block @click="onClickPARefresh">Refresh</v-btn>
+          </v-list-item>
+        </v-list>
+      </div>
+      <div v-else-if="polar.stage.endsWith(' Rotation') && align.settings.pAHManualSlew">
+        <v-list class="no-v-list-background">
+          <v-list-item>
+            <v-btn block @click="onClickPASlewDone">Slew Done</v-btn>
+          </v-list-item>
+        </v-list>
+      </div>
+      <v-list class="no-v-list-background">
+        <v-list-item>
+          <v-btn block @click="onClickPA">{{ textPA }}</v-btn>
+        </v-list-item>
+      </v-list>
+    </div>
+    <p v-else>Polar Alignment tool requires a German Equatorial Mount.</p>
+  
+  <!-- <v-expansion-panels :rounded="[8, 0]" static>
+  <v-expansion-panel title="Options">
+  <v-expansion-panel-text>
+  <v-expansion-panels :rounded="[8, 0]" variant="accordion" static>
+    <v-expansion-panel title="StellarSolver">
 
-    <div v-if="(polar.stage === 'Select Star' || polar.stage == 'Refreshing') 
-        && (polar.vector || polar.updatedError)"
-    >
-      Measured:
-      <v-row no-gutters v-if="polar.vector">
-        <v-col>Err: {{ dms(polar.vector.error) }}</v-col>
-        <v-col>Alt: {{ dms(polar.vector.altError) }}</v-col>
-        <v-col>Az: {{ dms(polar.vector.azError) }}</v-col>
-      </v-row>
-      <div v-if="polar.updatedError">Updated:</div>
-      <v-row no-gutters v-if="polar.updatedError">
-        <v-col>Err: {{ dms(polar.updatedError) }}</v-col>
-        <v-col>Alt: {{ dms(polar.updatedALTError) }}</v-col>
-        <v-col>Az: {{ dms(polar.updatedAZError) }}</v-col>
-      </v-row>
-      <v-row no-gutters v-if="polar.vector || polar.updatedError">
-        <v-col />
-        <v-col><v-icon :icon="arrowAltPA.icon" :size="arrowAltPA.size" /></v-col>
-        <v-col><v-icon :icon="arrowAzPA.icon" :size="arrowAzPA.size" /></v-col>
-      </v-row>
-      <v-divider class="mb-2 mt-2" />
-    </div>
-    <p> {{ polar.message }} </p>
-    <v-divider class="mb-2" />
-    <div v-if="polar.stage === 'Idle'">
-      <v-row density="compact">
-        <v-col>
-          <v-select 
-            v-model="settings.pAHDirection" 
-            :items="['East', 'West']" 
-            label="Direction" hide-details
-          />
-        </v-col>
-        <v-col>
-          <v-number-input
-            v-model="settings.pAHRotation" 
-            label="Rotation magnitude" suffix="&deg;" :step="15" :min="15" :max="60" hide-details
-          />
-        </v-col>
-      </v-row>
-      <v-row density="compact">
-        <v-col>
-          <v-select
-            v-model="settings.pAHMountSpeed"
-            :items="deviceInfo.mount.slewRates"
-            label="Speed"
-            :item-title="(item) => item.label != item.name ? `${item.label} (${item.name})` : item.label"
-            item-value="label"
-          />
-        </v-col>
-        <v-col>
-          <v-checkbox v-model="settings.pAHManualSlew" label="Manual slew" />
-        </v-col>
-      </v-row>
-    </div>
-    <div v-else-if="polar.stage === 'Select Star'">
-      <v-number-input
-        v-model="settings.pAHExposure" 
-        label="Refresh Exposure" :min="1" :max="30"
-      />
-      <!-- TODO: eventally implement other refresh algos? -->
-      <v-select 
-        v-model="settings.pAHRefreshAlgorithm" 
-        :items="['Plate Solve'/*,'Move Star','Move Star & Calc Error'*/]"
-        label="Direction" 
-      />
-      <v-list class="no-v-list-background">
-        <v-list-item>
-          <v-btn block @click="onClickPARefresh">Refresh</v-btn>
-        </v-list-item>
-      </v-list>
-    </div>
-    <div v-else-if="polar.stage.endsWith(' Rotation') && align.settings.pAHManualSlew">
-      <v-list class="no-v-list-background">
-        <v-list-item>
-          <v-btn block @click="onClickPASlewDone">Slew Done</v-btn>
-        </v-list-item>
-      </v-list>
-    </div>
-    <v-list class="no-v-list-background">
-      <v-list-item>
-        <v-btn block @click="onClickPA">{{ textPA }}</v-btn>
-      </v-list-item>
-    </v-list>
+    </v-expansion-panel>
+  </v-expansion-panels>
+  </v-expansion-panel-text>
+  </v-expansion-panel>
+  </v-expansion-panels> -->
   </div>
 </template>
 <script setup>

@@ -90,7 +90,7 @@
       v-model="slewRate"
       :items="deviceInfo.mount.slewRates"
       label="Slew rate"
-      :item-title="(item) => item.label != item.name ? `${item.label} (${item.name})` : item.label"
+      :item-title="(item) => item.label !== item.name ? `(${item.name}) ${item.label}` : item.label"
       item-value="index"
     ></v-select>
   </div>
@@ -131,7 +131,7 @@ export default {
   },
   watch: {
     mountSlewRate(v) {
-      if (this.slewRate !== null || v === null) {
+      if ((this.slewRate !== null && this.slewRate >= 0 ) || v === null) {
         console.log(this.slewRate, v);
         return;
       }

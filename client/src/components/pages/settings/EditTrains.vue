@@ -1,4 +1,6 @@
 <template>
+<v-expansion-panel title="Edit Trains">
+<v-expansion-panel-text>
 <v-row density="compact">
   <v-col><v-select
     v-model="currTrain" :items="trains" hide-details
@@ -73,8 +75,10 @@
     label="Light box"
   /></v-col>
 </v-row>
-<div style="justify-self: center;"><v-btn width="150" @click.stop="saveTrain">Save</v-btn></div>
+<div style="justify-self: center;"><v-btn variant="outlined" width="150" @click.stop="saveTrain">Save</v-btn></div>
 </div>
+</v-expansion-panel-text>
+</v-expansion-panel>
 </template>
 <script>
 import { mapActions, mapState } from 'vuex';
@@ -95,7 +99,7 @@ const blankTrain = {
 
 export default {
   data: () => ({
-    currTrain: {},
+    currTrain: null,
     INDIInterfaces: INDIInterfaces,
     awaitingTrainAdd: false,
   }),
@@ -106,9 +110,6 @@ export default {
     ...mapState({
       trains: state => state.trains.trains,
     })
-  },
-  mounted() {
-    this.currTrain = this.trains[0];
   },
   watch: {
     trains(v) {

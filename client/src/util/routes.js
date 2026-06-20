@@ -1,13 +1,13 @@
 import Align from '@/components/pages/Align.vue'
 import Capture from '@/components/pages/Capture.vue'
 import Focus from '@/components/pages/Focus.vue'
-import Guide from '@/components/pages/Guide.vue'
+import Guide from '@/components/pages/guide/Guide.vue'
 import LiveStack from '@/components/pages/LiveStack.vue'
 import Logs from '@/components/pages/Logs.vue'
 import Main from '@/components/pages/Main.vue'
-import Mount from '@/components/pages/Mount.vue'
+import Mount from '@/components/pages/mount/Mount.vue'
 import ControlPanel from '@/components/pages/ControlPanel.vue'
-import Settings from '@/components/pages/Settings.vue'
+import Settings from '@/components/pages/settings/Settings.vue'
 
 const routes = [{
   name: "Main",

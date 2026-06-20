@@ -52,6 +52,9 @@ import {
   TRAIN_GET_ALL,
   TRAIN_GET_PROFILES,
   GET_SCOPES,
+  TRAIN_SETTINGS_GET,
+  TrainSettings,
+  GUIDE_GET_ALL_SETTINGS,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
 
@@ -70,7 +73,7 @@ const defaultEkosStates = {
     ra: null,
   },
   guide: {
-    status: "Idle"
+    status: "Idle",
   },
   focus: {
     status: "Idle"
@@ -81,10 +84,8 @@ const defaultEkosStates = {
   deviceInfo: {
     ccd: {
       isoList: null,
-      usesGain: true,
-      transferFormats: [],
-      captureFormats: [],
-      filters: []
+      formatsList: [],
+      filtersList: []
     },
     mount: {
       slewRates: []
@@ -116,7 +117,7 @@ const defaultEkosStates = {
   alignSettings: {},
   currObjId: 0,
   propLabelsMap: new Map([
-    ["ccd", { "CCD_ISO": [], "CCD_CAPTURE_FORMAT": [], "CCD_TRANSFER_FORMAT": [] }],
+    // ["ccd", { "CCD_ISO": [], "CCD_CAPTURE_FORMAT": [], "CCD_TRANSFER_FORMAT": [] }],
     ["mount", { "TELESCOPE_SLEW_RATE": [] }]
   ]),
 };
@@ -152,6 +153,14 @@ const store = createStore({
         parseFloat(state.mount.ra.toFixed(3)),
         parseFloat(state.mount.de.toFixed(3)),
       ];
+    },
+    pierSide: state => {
+      if (state.mount.pierSide === 1) {
+        return "East (pointing West)";
+      } else if (state.mount.pierSide === 0) {
+        return "West (pointing East)";
+      }
+      return "?";
     },
     gpsLocation: state => {
       if (state.gps.lat === null || state.gps.lon === null) return null;
@@ -234,8 +243,10 @@ const store = createStore({
               { name: "ekosLiveCloud", value: true }
             ]
           }]);
+          this.dispatch("findDeviceDetails");
           this.dispatch("sendMsg", [GET_STATES]);
           this.dispatch("sendMsg", [TRAIN_GET_ALL]);
+          this.dispatch("sendMsg", [TRAIN_GET_PROFILES]);
         } else {
           // Still connected to KStars, but Ekos was closed. Reset states to default.
           this.dispatch("reset");
@@ -316,9 +327,9 @@ const store = createStore({
     },
     [CAPTURE_GET_ALL_SETTINGS](state, message) {
       state.capture.settings = message.payload;
-      if (state.deviceInfo.ccd.filters.length === 0) {
-        this.dispatch("sendMsg", [FM_GET_DATA]);
-      }
+    },
+    [GUIDE_GET_ALL_SETTINGS](state, message) {
+      state.guide.settings = message.payload;
     },
     [CAPTURE_GET_SEQUENCES](state, message) {
       state.sequenceQueue = message.payload;
@@ -414,6 +425,21 @@ const store = createStore({
     },
     [TRAIN_GET_PROFILES](state, message) {
       state.trains.profiles = message.payload;
+      this.dispatch("sendMsg", [TRAIN_SETTINGS_GET, { id: state.trains.profiles['0'] }]);
+    },
+    [TRAIN_SETTINGS_GET](state, message) {
+      const tSettings = message.payload;
+      Object.keys(tSettings).forEach((k) => {
+        const settings = tSettings[k];
+        switch (+k) {
+          case TrainSettings.Capture: {
+            if (settings['isoList']) state.deviceInfo.ccd.isoList = settings['isoList'];
+            state.deviceInfo.ccd.formatsList = settings['formatsList'] ?? ["Missing formatList"];
+            state.deviceInfo.ccd.filtersList = settings['filtersList'] ?? [];
+            break;
+          }
+        }
+      });
     },
     [GET_SCOPES](state, message) {
       state.scopes = message.payload;
@@ -427,7 +453,6 @@ const store = createStore({
       Object.assign(state, JSON.parse(JSON.stringify(defaultEkosStates)));
       state.gotoObjects.clear();
       state.deviceTypeMap.clear();
-      interfaceDeviceMap.clear();
       state.propLabelsMap = structuredClone(defaultEkosStates.propLabelsMap);
       console.log("reset");
     },
@@ -460,7 +485,6 @@ const store = createStore({
     },
     startProfile: ({ dispatch }, profile) => {
       dispatch('sendMsg', [START_PROFILE, { name: profile }]);
-      dispatch("findDeviceDetails");
     },
     findDeviceDetails: ({ dispatch, state }) => {
       const profiles = state.profiles;

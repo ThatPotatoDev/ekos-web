@@ -51,7 +51,6 @@
   </div>
 </template>
 <script>
-import refresh from "@iconify/icons-mdi/refresh"
 import { nextTick } from "vue";
 import { mapActions, mapState } from "vuex";
 import Fuse from "fuse.js";

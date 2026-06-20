@@ -6,28 +6,19 @@
     <v-divider class="mb-2"></v-divider>
     <ul>
       <li>
-        GPS: {{ gpsMode }}
-        <template v-if="gps.mode >= 2">
-          <ul>
-            <li>Latitude: {{ gps.lat.toFixed(3) }}</li>
-            <li>Longitude: {{ gps.lon.toFixed(3) }}</li>
-            <li v-if="gps.mode >= 3">Altitude: {{ gps.alt.toFixed(2) }}m</li>
-          </ul>
-        </template>
-      </li>
-      <li>
         Mount: {{ mount.status }}
         <ul>
-          <li v-if="mount.ra">RA: {{ ra }}</li>
-          <li v-if="mount.de">DEC: {{ dec }}</li>
+          <li v-if="mount.ra">RA: {{ hms(mount.ra) }}</li>
+          <li v-if="mount.de">DE: {{ dms(mount.de, true) }}</li>
           <li v-if="mount.meridianFlipText">{{ mount.meridianFlipText }}</li>
+          <li v-if="mount.pierSide !== undefined">Pier Side: {{ pierSide }}</li>
         </ul>
       </li>
       <li>
         Guider: {{ guide.status }}
         <ul v-if="guide.derms">
           <li>RA RMS: {{ guide.rarms.toFixed(3) }}"</li>
-          <li>DEC RMS: {{ guide.derms.toFixed(3) }}"</li>
+          <li>DE RMS: {{ guide.derms.toFixed(3) }}"</li>
         </ul>
       </li>
       <li>
@@ -49,13 +40,24 @@
           <li>{{ align.seql }}</li>
         </ul>
       </li>
+      <li>
+        GPS: {{ gpsMode }}
+        <template v-if="gps.mode >= 2">
+          <ul>
+            <li>Latitude: {{ gps.lat.toFixed(3) }}</li>
+            <li>Longitude: {{ gps.lon.toFixed(3) }}</li>
+            <li v-if="gps.mode >= 3">Altitude: {{ gps.alt.toFixed(2) }}m</li>
+          </ul>
+        </template>
+      </li>
     </ul>
   </div>
 </template>
-
+<script setup>
+import { hms, dms } from "../../util/coords";
+</script>
 <script>
 import LastNotification from "@/components/common/LastNotification.vue";
-import { dms, hms } from "@/util/coords";
 import { mapGetters, mapState } from "vuex";
 
 export default {
@@ -64,7 +66,7 @@ export default {
   },
   computed: {
     ...mapGetters([
-      "mountPosition",
+      "pierSide"
     ]),
     ...mapState([
       'preview',
@@ -75,14 +77,7 @@ export default {
       'align',
       'gps',
     ]),
-    ra() {
-      if (this.mount.ra) return hms(this.mount.ra);
-      return "";
-    },
-    dec() {
-      if (this.mount.de) return dms(this.mount.de, true);
-      return "";
-    },
+    
     gpsMode() {
       const mode = this.gps.mode;
       return ["Unknown", "No Fix", "2D Fix", "3D Fix"][mode];
