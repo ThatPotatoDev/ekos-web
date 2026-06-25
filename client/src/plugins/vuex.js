@@ -57,7 +57,7 @@ import {
   GUIDE_GET_ALL_SETTINGS,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
-
+import { stelModule } from './stelModule';
 
 const defaultEkosStates = {
   preview: {
@@ -123,6 +123,9 @@ const defaultEkosStates = {
 };
 
 const store = createStore({
+  modules: {
+    stelStore: stelModule
+  },
   state: {
     socket: {
       isConnected: false,

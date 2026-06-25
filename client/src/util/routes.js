@@ -8,12 +8,18 @@ import Main from '@/components/pages/Main.vue'
 import Mount from '@/components/pages/mount/Mount.vue'
 import ControlPanel from '@/components/pages/ControlPanel.vue'
 import Settings from '@/components/pages/settings/Settings.vue'
+import Stellarium from '@/components/stellarium/Stellarium.vue'
 
 const routes = [{
   name: "Main",
   path: "/",
   icon: "mdi-home",
   component: Main,
+},{
+  name: "Stellarium",
+  path: "/stellarium",
+  icon: "mdi-staridk",
+  component: Stellarium,
 },{
   name: "Capture",
   path: "/capture",

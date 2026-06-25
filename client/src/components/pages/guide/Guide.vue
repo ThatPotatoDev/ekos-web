@@ -9,7 +9,7 @@
         RA RMS: {{ guide.rarms.toFixed(3) }}
       </v-col>
       <v-col v-if="guide.status === 'Guiding'">
-        Dec RMS: {{ guide.derms.toFixed(3) }}
+        DE RMS: {{ guide.derms.toFixed(3) }}
       </v-col>
     </v-row>
     <LastNotification />
@@ -24,7 +24,7 @@
     </v-list>
   <v-divider class="mb-3"></v-divider>
 
-  <GuideOptions />
+  <!-- <GuideOptions /> -->
   </div>
 </template>
 <script>
