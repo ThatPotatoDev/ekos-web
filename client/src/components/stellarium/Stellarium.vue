@@ -46,17 +46,16 @@
       :selectedObjectDecDeg="selectedObjectDecDeg"
       @setFramingCoordinates="setFramingCoordinates"
     /> -->
-    <!-- <div
-      :class="controlsClasses"
-      class="fixed flex gap-2 bg-black bg-opacity-90 p-2 rounded-full stellarium-controls"
-      style="bottom: calc(env(safe-area-inset-bottom, 0px) + 48px)"
+    <div
+      class="left-2 position-fixed d-flex ga-2 pa-2 rounded-pill stellarium-controls"
+      style="bottom: 8px; background-color: rgba(0, 0, 0, 0.5); left: 8px;"
     >
-      <stellariumCredits />
+      <!-- <stellariumCredits /> -->
       <stellariumSettings />
 
-      Clock
-      <stellariumClock v-if="this.stelStore.stel" />
-    </div> -->
+      <!-- Clock -->
+      <!-- <stellariumClock v-if="this.stelStore.stel" /> -->
+    </div>
 
     <!-- Horizon overlay (renders into SWE GeoJSON layer, no visible DOM element) -->
     <!-- <StellariumHorizonOverlay v-if="this.stelStore.stel" /> -->
@@ -67,8 +66,21 @@
 </template>
 <script>
 import { mapActions, mapState } from 'vuex';
+import stellariumSettings from "@/components/stellarium/stellariumSettings.vue"
+import { degreesToDMS, degreesToHMS, rad2deg } from './stelUtil';
 const wasmPath = '/stellarium-js/stellarium-web-engine.wasm';
 export default {
+  components: {
+    stellariumSettings,
+  },
+  data: () => ({
+    isSearchVisible: false,
+    selectedObject: null,
+    selectedObjectRa: null,
+    selectedObjectDec: null,
+    selectedObjectRaDeg: null,
+    selectedObjectDecDeg: null,
+  }),
   computed: {
     ...mapState([
       "stelStore"
@@ -116,15 +128,14 @@ export default {
           wasmFile: wasmPath,
 
           canvas: this.$refs.stelCanvas,
-          async onReady(stel) {
+          onReady: async (stel) => {
             console.log('Stellarium is ready!');
             stelStore.stel = stel;
 
             // Beobachter-Standort setzen (Koordinaten müssen in Radian sein):
-            stel.core.observer.latitude = settings.lat * stel.D2R;
-            stel.core.observer.longitude = settings.lon * stel.D2R;
-            console.log(stel.D2R);
-            stel.core.observer.elevation = settings.elev;
+            stel.core.observer.latitude = settings.loc.latitude * stel.D2R;
+            stel.core.observer.longitude = settings.loc.longitude * stel.D2R;
+            stel.core.observer.elevation = settings.loc.elevation;
 
             // Ensure timeSync is synced, then set server time
             // await timeSync.ensureSync();
@@ -249,44 +260,41 @@ export default {
                 const selection = core.selection;
                 if (!selection) {
                   // Abwahl
-                  selectedObject.value = null;
+                  this.selectedObject = null;
                   console.log('No selection (deselected).');
                   return;
                 }
                 if (stel.core.selection) {
-                  isSearchVisible.value = false;
-                  const selectedDesignations = stel.core.selection.designations() || [];
+                  const sel = stel.core.selection;
+                  this.isSearchVisible = false;
+                  const selectedDesignations = sel.designations() || [];
                   // For coordinate-based search results (NGC, etc.) designations()
                   // returns nothing useful — prepend the last searched name so it
                   // gets passed on to framing/sequence.
-                  const searchedName = this.stelStore.lastSearchedName;
-                  this.stelStore.lastSearchedName = '';
+                  const searchedName = stelStore.lastSearchedName;
+                  stelStore.lastSearchedName = '';
                   const designationsList = Array.isArray(selectedDesignations)
                     ? selectedDesignations
                     : [];
                   if (searchedName && !designationsList.includes(searchedName)) {
-                    selectedObject.value = [searchedName, ...designationsList];
+                    this.selectedObject = [searchedName, ...designationsList];
                   } else {
-                    selectedObject.value = designationsList;
+                    this.selectedObject = designationsList;
                   }
-                  console.log('Object designations:', selectedObject.value);
-                  const info = stel.core.selection;
-                  //console.log('Object information:', info);
+                  const info = sel;
 
                   const raDec = info.getInfo('RADEC');
-                  console.log(raDec);
                   //const cirs = stel.convertFrame(stel.observer, 'ICRF', 'ICRF', raDec);
                   const radecCIRS = stel.c2s(raDec);
-                  console.log('radecCIRS', radecCIRS);
                   const ra = stel.anp(radecCIRS[0]); // RA in Radian
                   const dec = stel.anpm(radecCIRS[1]); // Dec in Radian
 
-                  console.log(ra, dec);
-
-                  selectedObjectRa.value = degreesToHMS(rad2deg(ra));
-                  selectedObjectDec.value = degreesToDMS(rad2deg(dec));
-                  selectedObjectRaDeg.value = rad2deg(ra);
-                  selectedObjectDecDeg.value = rad2deg(dec);
+                  this.selectedObjectRa = degreesToHMS(rad2deg(ra));
+                  this.selectedObjectDec = degreesToDMS(rad2deg(dec));
+                  this.selectedObjectRaDeg = rad2deg(ra);
+                  this.selectedObjectDecDeg = rad2deg(dec);
+                  console.log(this.selectedObjectRa, this.selectedObjectDec, ra, dec);
+                  console.log(stel.a2tf(ra, 1),stel.a2af(dec, 1));
                 }
               }
             });
@@ -297,6 +305,21 @@ export default {
       }
     };
     document.head.appendChild(script);
+  },
+  beforeUnmount() {
+    if (this.stelStore.stel) {
+      console.log('Destroying Stellarium...');
+  
+      // Entferne die Stellarium-Instanz
+      this.stelStore.stel = null;
+  
+      if (this.$refs.stelCanvas.value) {
+        this.$refs.stelCanvas.value.width = 0;
+        this.$refs.stelCanvas.value.height = 0;
+      }
+  
+      console.log('Stellarium successfully terminated.');
+  }
   }
 }
 </script>
@@ -325,7 +348,7 @@ export default {
   top: 0;
   left: 0;
   width: 100vw;
-  height: calc(100dvh - 1.5rem - env(safe-area-inset-bottom, 0px));
+  height: 100dvh;
 }
 
 .stellarium-canvas {

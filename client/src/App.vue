@@ -19,7 +19,7 @@
     </v-navigation-drawer>
     <v-main>
       <template v-if="connection?.online || $route.path === '/settings'">
-        <router-view :key="$route.fullPath" />
+        <router-view :key="`${$route.fullPath}-${routerKeyTrigger}`" />
       </template>
       <div v-else class="pa-2">
         <v-select v-model="profiles.selectedProfile" :items="profiles.profiles.map(p => p.name)" label="Profile" item-text="name" item-value="name" />
@@ -37,7 +37,8 @@ export default {
   computed: {
     ...mapState([
       "connection", "indiStatus", 
-      "socket", "profiles"
+      "socket", "profiles",
+      "routerKeyTrigger"
     ]),
     connected() {
       return this.connection?.connected;

@@ -5,6 +5,7 @@ import App from './App.vue'
 import router from '@/plugins/router'
 import vuetify from '@/plugins/vuetify'
 import store from '@/plugins/vuex'
+import i18n from '@/plugins/i18n.js'
 
 import VueNativeSock from 'vue-native-websocket-vue3'
 
@@ -18,8 +19,9 @@ app.use(VueNativeSock, 'ws://' + window.location.hostname + ':3000/message/user'
 //todo: remove
 window.store = store;
 
-app.use(vuetify)
-app.use(store)
-app.use(router)
+app.use(vuetify);
+app.use(store);
+app.use(router);
+app.use(i18n);
 
 app.mount('#app')

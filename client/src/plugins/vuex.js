@@ -1,7 +1,6 @@
 import { buildDevice } from '@/util/device';
 import { createStore } from 'vuex';
 
-
 import {
   CAPTURE_SET_ALL_SETTINGS,
   CAPTURE_GET_ALL_SETTINGS,
@@ -55,6 +54,7 @@ import {
   TRAIN_SETTINGS_GET,
   TrainSettings,
   GUIDE_GET_ALL_SETTINGS,
+  ASTRO_GET_LOCATION,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
 import { stelModule } from './stelModule';
@@ -127,6 +127,7 @@ const store = createStore({
     stelStore: stelModule
   },
   state: {
+    routerKeyTrigger: 0,
     socket: {
       isConnected: false,
       message: '',
@@ -248,6 +249,7 @@ const store = createStore({
           }]);
           this.dispatch("findDeviceDetails");
           this.dispatch("sendMsg", [GET_STATES]);
+          this.dispatch("sendMsg", [ASTRO_GET_LOCATION]);
           this.dispatch("sendMsg", [TRAIN_GET_ALL]);
           this.dispatch("sendMsg", [TRAIN_GET_PROFILES]);
         } else {
@@ -416,6 +418,9 @@ const store = createStore({
         map.set(o, { id: state.currObjId++, primary: o, display: o });
       }
     },
+    [ASTRO_GET_LOCATION](state, message) {
+      state.stelStore.settings.loc = message.payload;
+    },
     // [LIVESTACK_LOG](state, message) {
     //   const msg = { ts: new Date(), message: message.payload }
     //   state.livestack.messages.push(msg);
@@ -449,6 +454,9 @@ const store = createStore({
     },
   },
   actions: {
+    refreshRouterView: ({ state }) => {
+      state.routerKeyTrigger++;
+    },
     reset: ({ state }) => {
       // Object.keys(defaultEkosStates).forEach(k => {
       //   state[k] = defaultEkosStates[k];

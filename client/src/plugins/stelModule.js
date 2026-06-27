@@ -1,27 +1,44 @@
+import { resolveLandscapeSource } from "../components/stellarium/stelUtil.js";
+
+const activeLandscapes = new WeakMap();
+
 export const stelModule = {
   state: {
     settings: {
-      lat: 39,
-      lon: -77,
-      elev: 130
+      loc: {},
+      stellarium: {
+        constellationsLinesVisible: true,
+        azimuthalLinesVisible: false,
+        equatorialLinesVisible: false,
+        meridianLinesVisible: false,
+        eclipticLinesVisible: false,
+        atmosphereVisible: true,
+        landscapesVisible: true,
+        landscapeSourceMode: 'default',
+        customLandscapeUrl: '',
+        customLandscapeKey: 'custom',
+        dsosVisible: true,
+      },
     }
   },
   actions: {
-    updateStellariumCore() {
-      if (this.stel) {
-        const core = this.stel.core;
+    updateStellariumCore: ({ state }) => {
+      if (state.stel) {
+        const core = state.stel.core;
+        const settings = state.settings.stellarium
 
-        core.constellations.lines_visible = settings.stellarium.constellationsLinesVisible;
-        core.constellations.labels_visible = settings.stellarium.constellationsLinesVisible;
-        core.lines.azimuthal.visible = settings.stellarium.azimuthalLinesVisible;
-        core.lines.equatorial.visible = settings.stellarium.equatorialLinesVisible;
-        core.lines.meridian.visible = settings.stellarium.meridianLinesVisible;
-        core.lines.ecliptic.visible = settings.stellarium.eclipticLinesVisible;
-        core.atmosphere.visible = settings.stellarium.atmosphereVisible;
-        core.dsos.visible = settings.stellarium.dsosVisible; // Deep Sky Objects (Messier, NGC, etc.)
+        core.constellations.lines_visible = settings.constellationsLinesVisible;
+        core.constellations.labels_visible = settings.constellationsLinesVisible;
+        core.lines.azimuthal.visible = settings.azimuthalLinesVisible;
+        core.lines.equatorial.visible = settings.equatorialLinesVisible;
+        core.lines.meridian.visible = settings.meridianLinesVisible;
+        core.lines.ecliptic.visible = settings.eclipticLinesVisible;
+        core.atmosphere.visible = settings.atmosphereVisible;
+        core.dsos.visible = settings.dsosVisible; // Deep Sky Objects (Messier, NGC, etc.)
 
-        const landscapeConfig = resolveLandscapeSource(settings.stellarium, this.baseUrl);
+        const landscapeConfig = resolveLandscapeSource(settings, state.baseUrl);
         core.landscapes.visible = landscapeConfig.visible;
+        console.log(landscapeConfig);
 
         if (landscapeConfig.visible && landscapeConfig.source) {
           const nextLandscapeSignature = `${landscapeConfig.source.key}|${landscapeConfig.source.url}`;
@@ -32,7 +49,7 @@ export const stelModule = {
           }
         }
 
-        console.log('Stellarium settings updated:');
+        console.log('Stellarium settings updated:',);
       }
     },
   },

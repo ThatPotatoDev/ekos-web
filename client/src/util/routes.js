@@ -16,9 +16,9 @@ const routes = [{
   icon: "mdi-home",
   component: Main,
 },{
-  name: "Stellarium",
-  path: "/stellarium",
-  icon: "mdi-staridk",
+  name: "Sky",
+  path: "/sky",
+  icon: "mdi-creation",
   component: Stellarium,
 },{
   name: "Capture",
