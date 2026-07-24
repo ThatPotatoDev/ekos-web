@@ -6,19 +6,8 @@
       <EditScopes />
       <EditTrains />
       <OpticalTrains />
-      <v-expansion-panel>
-        <v-expansion-panel-text>
-        <v-list class="no-v-list-background">
-          <v-list-item><v-btn @click="saveSettings" block>Save Settings</v-btn></v-list-item>
-        </v-list>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
+      <ClientSettings />
     </v-expansion-panels>
-    <v-row density="compact">
-      <v-col><v-number-input v-model="clientSettings.minPAError" label="Min PA Error" :min="1" suffix="arcsec" /></v-col>
-      <v-col></v-col>
-    </v-row>
-    
     <v-list class="no-v-list-background">
       <v-list-item v-if="connection?.online"><v-btn @click="stopProfile" block>Stop Profile</v-btn></v-list-item>
       <v-list-item><v-btn class="redButton" @click="power('shutdown')" block>Shutdown</v-btn></v-list-item>
@@ -28,27 +17,26 @@
 </template>
 <script>
 import { mapActions, mapState } from 'vuex';
-import { CLIENT_SAVE_SETTINGS, DAEMON, STOP_PROFILE } from '../../../util/messageTypes.js';
+import { DAEMON, STOP_PROFILE } from '../../../util/messageTypes.js';
 import OpticalTrains from './OpticalTrains.vue';
 import EditScopes from './EditScopes.vue';
 import EditTrains from './EditTrains.vue'
+import ClientSettings from './ClientSettings.vue';
 
 export default {
   components: {
     EditScopes,
     EditTrains,
     OpticalTrains,
+    ClientSettings
   },
   computed: {
     ...mapState([
-      "connection", "clientSettings",
+      "connection",
     ]),
   },
   methods: {
     ...mapActions(["sendMsg", "reset"]),
-    saveSettings() {
-      this.sendMsg([CLIENT_SAVE_SETTINGS, this.clientSettings]);
-    },
     stopProfile() {
       this.sendMsg([STOP_PROFILE]);
     },

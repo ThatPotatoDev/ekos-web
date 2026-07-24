@@ -52,38 +52,26 @@ const processDeviceProperty = (dispatch, state, prop) => {
   if (prop.switches?.map(p => p.label)?.includes(undefined)) {
     dispatch('sendMsg', [DEVICE_PROPERTY_GET, { device: prop.device, property: prop.name, compact: false }]);
     return;
-  } else {
+  } else if (prop.switches) {
     labels[prop.name] = prop.switches.map(p => p.label);
   }
 
   switch (prop.device) {
-    // removed bc TRAIN_SETTINGS_GET contains this data
-    // case selectedProfile.ccd: {
-    //   switch (prop.name) {
-    //     case "CCD_ISO": {
-    //       console.log("iso")
-    //       state.deviceInfo.ccd.isoList = prop.switches.map((p, i) => p.label ?? labels[prop.name][i]);
-    //       state.deviceInfo.ccd.usesGain = false;
-    //       break;
-    //     }
-    //     case "CCD_CAPTURE_FORMAT": {
-    //       state.deviceInfo.ccd.captureFormats = prop.switches.map((p, i) => p.label ?? labels[prop.name][i]);
-    //       break;
-    //     }
-    //     case "CCD_TRANSFER_FORMAT": {
-    //       state.deviceInfo.ccd.transferFormats = prop.switches.map((p, i) => p.label ?? labels[prop.name][i]);
-    //       break;
-    //     }
-    //   }
-    //   break;
-    // }
+    case selectedProfile.ccd: {
+      switch (prop.name) {
+        case "CCD_INFO": {
+          state.deviceInfo.ccd.pixelSize = parseFloat(prop.numbers.find(n => n.name === "CCD_PIXEL_SIZE").value.toFixed(3));
+          break;
+        }
+      }
+      break;
+    }
     case selectedProfile.mount: {
       switch (prop.name) {
         case "TELESCOPE_SLEW_RATE": {
           prop.switches.forEach((v, i) => {
             state.deviceInfo.mount.slewRates[i] = { label: v.label ?? labels[prop.name][i], name: v.name, index: i };
           });
-          console.log("slew rates", state.deviceInfo.mount.slewRates);
           break;
         }
       }

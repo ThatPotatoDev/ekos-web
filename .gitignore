@@ -1,10 +1,21 @@
 .DS_Store
 node_modules
 /dist
-server/static
+server/static/*
+!server/static/stellarium-data
+server/static/stellarium-data/*
+!server/static/stellarium-data/dssGen
+!server/static/stellarium-data/landscapes
+!server/static/stellarium-data/skycultures
+server/static/stellarium-data/dssGen/surveys/dss/Norder*
 server/clientSettings.json
+
 client/dist
-livestack
+client/public/stellarium-data/dssGen/surveys/dss/Norder*
+
+scripts/catalog.json
+scripts/stelDataZips
+scripts/hips/urls-Norder*
 
 # local env files
 .env.local

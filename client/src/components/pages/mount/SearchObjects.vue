@@ -13,7 +13,7 @@
       </v-list-item>
       <v-list-item v-if="target">
         <v-text-field
-          v-model="target.display"
+          v-model="target"
           label="Target"
           hide-details readonly
         />
@@ -53,21 +53,18 @@
 <script>
 import { nextTick } from "vue";
 import { mapActions, mapState } from "vuex";
-import Fuse from "fuse.js";
 import { ASTRO_GET_NAMES, MOUNT_GOTO_TARGET } from "../../../util/messageTypes";
 
 export default {
-  data() {
-    return {
-      open: false,
-      query: "",
-      fuse: null,
-      target: null,
-    };
-  },
+  data: () => ({
+    open: false,
+    query: "",
+    target: null,
+  }),
   computed: {
     ...mapState([
       "gotoObjects",
+      "gotoObjectsFuse",
       "mount"
     ]),
     gotoList() {
@@ -75,29 +72,10 @@ export default {
     },
     filtered() {
       if (this.query.trim() === "") return this.gotoList.slice(0, 50);
-      // if (!this.fuse) {
-      //   return this.gotoList
-      //     .filter(o =>
-      //       o.display.toLowerCase().includes(this.query.toLowerCase())
-      //     )
-      //     .slice(0, 50);
-      // }
-      return this.fuse
+      return this.gotoObjectsFuse
         .search(this.query)
         .slice(0, 50)
         .map(r => r.item);
-    }
-  },
-  watch: {
-    gotoList: {
-      handler(list) {
-        this.fuse = new Fuse(list, {
-          keys: ["display"],
-          threshold: 0.3
-        });
-        this.target = this.gotoObjects.get(this.mount.target);
-      },
-      immediate: true
     }
   },
   methods: {
@@ -111,15 +89,18 @@ export default {
     },
     selectItem(item) {
       this.open = false;
-      this.target = item;
+      this.target = item.primary;
       this.query = "";
     },
     goto() {
-      this.sendMsg([MOUNT_GOTO_TARGET, { target: this.target.primary } ])
+      this.sendMsg([MOUNT_GOTO_TARGET, { target: this.target } ])
     },
     refresh() {
       this.sendMsg([ASTRO_GET_NAMES]);
     }
+  },
+  mounted() {
+    this.target = this.mount.target;
   }
 }
 

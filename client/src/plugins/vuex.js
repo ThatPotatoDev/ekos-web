@@ -55,9 +55,13 @@ import {
   TrainSettings,
   GUIDE_GET_ALL_SETTINGS,
   ASTRO_GET_LOCATION,
+  ASTRO_GET_OBJECT_INFO,
+  ASTRO_GET_OBJECTS_INFO,
+  MOUNT_GET_ALL_SETTINGS,
 } from '../util/messageTypes';
 import { processDeviceProperty } from '../util/device';
 import { stelModule } from './stelModule';
+import Fuse from "fuse.js";
 
 const defaultEkosStates = {
   preview: {
@@ -85,7 +89,8 @@ const defaultEkosStates = {
     ccd: {
       isoList: null,
       formatsList: [],
-      filtersList: []
+      filtersList: [],
+      pixelSize: 0,
     },
     mount: {
       slewRates: []
@@ -117,9 +122,11 @@ const defaultEkosStates = {
   alignSettings: {},
   currObjId: 0,
   propLabelsMap: new Map([
-    // ["ccd", { "CCD_ISO": [], "CCD_CAPTURE_FORMAT": [], "CCD_TRANSFER_FORMAT": [] }],
+    ["ccd", { "CCD_INFO": [] }],
     ["mount", { "TELESCOPE_SLEW_RATE": [] }]
   ]),
+  gotoObjectsFuse: null,
+  objectsInfo: []
 };
 
 const store = createStore({
@@ -127,7 +134,6 @@ const store = createStore({
     stelStore: stelModule
   },
   state: {
-    routerKeyTrigger: 0,
     socket: {
       isConnected: false,
       message: '',
@@ -144,6 +150,8 @@ const store = createStore({
     },
     clientSettings: {
       minPAError: 20,
+      defaultCamRotation: 90,
+      stelQueryUrl: "http://192.168.1.132:2443/search"
     },
     gotoObjects: new Map(),
     deviceTypeMap: new Map(),
@@ -250,6 +258,8 @@ const store = createStore({
           this.dispatch("findDeviceDetails");
           this.dispatch("sendMsg", [GET_STATES]);
           this.dispatch("sendMsg", [ASTRO_GET_LOCATION]);
+          this.dispatch("sendMsg", [ASTRO_GET_NAMES]);
+          
           this.dispatch("sendMsg", [TRAIN_GET_ALL]);
           this.dispatch("sendMsg", [TRAIN_GET_PROFILES]);
         } else {
@@ -297,6 +307,11 @@ const store = createStore({
         ...state.align,
         ...message.payload,
       };
+      const fov = state.align.solution?.fov;
+      if (fov) 
+        state.align.solution.fovs = fov
+          .slice(0, fov.length - 1)
+          .split("' x ").map(parseFloat);
     },
     [NEW_GPS_STATE](state, message) {
       state.gps = {
@@ -332,6 +347,9 @@ const store = createStore({
     },
     [CAPTURE_GET_ALL_SETTINGS](state, message) {
       state.capture.settings = message.payload;
+    },
+    [MOUNT_GET_ALL_SETTINGS](state, message) {
+      state.mount.settings = message.payload;
     },
     [GUIDE_GET_ALL_SETTINGS](state, message) {
       state.guide.settings = message.payload;
@@ -377,15 +395,14 @@ const store = createStore({
       for (const raw of message.payload) {
         if (raw.includes(" (") && removeSet.has(raw.split(" (")[0])) continue;
         map.set(raw, {
-          id: state.currObjId++,
-          primary: raw,
-          display: raw
+          "id": state.currObjId++,
+          "primary": raw,
+          "display": raw
         });
       }
 
       state.gotoObjects = map;
-      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SkyObject.PLANET, maxMagnitude: 100, minAlt: -180 } ]);
-      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SkyObject.COMET, maxMagnitude: 25, minAlt: 0 } ]);
+
       this.dispatch("sendMsg", [ASTRO_GET_DESIGNATIONS]);
     },
     [ASTRO_GET_DESIGNATIONS](state, message) {
@@ -397,26 +414,36 @@ const store = createStore({
         const primary = obj.primary;
         const designations = obj.designations.filter(d => d !== primary);
         designations.forEach(d => removeSet.add(d));
-        const display =
+        const search =
           designations.length > 0
             ? `${primary} (${designations.join(", ")})`
             : primary;
 
         map.set(primary, {
-          id: state.currObjId++,
-          primary,
-          display
+          "id": state.currObjId++,
+          "primary" : primary,
+          "display": search,
         });
       }
-
       removeSet.forEach(r => map.delete(r));
-
+      this.dispatch("sendMsg", [ASTRO_SEARCH_OBJECTS, { type: SkyObject.COMET, maxMagnitude: 25, minDuration: -1 } ]);
     },
     [ASTRO_SEARCH_OBJECTS](state, message) {
       const map = state.gotoObjects;
       for (const o of message.payload) {
-        map.set(o, { id: state.currObjId++, primary: o, display: o });
+        map.set(o, { 
+          "id": state.currObjId++,
+          "primary": o,
+          "display": o,
+        });
       }
+      state.gotoObjectsFuse = new Fuse(Array.from(map.values()), {
+        keys: ["display"],
+        threshold: 0.3
+      });
+    },
+    [ASTRO_GET_OBJECTS_INFO](state, message) {
+      state.objectsInfo = message.payload;
     },
     [ASTRO_GET_LOCATION](state, message) {
       state.stelStore.settings.loc = message.payload;
@@ -454,9 +481,6 @@ const store = createStore({
     },
   },
   actions: {
-    refreshRouterView: ({ state }) => {
-      state.routerKeyTrigger++;
-    },
     reset: ({ state }) => {
       // Object.keys(defaultEkosStates).forEach(k => {
       //   state[k] = defaultEkosStates[k];

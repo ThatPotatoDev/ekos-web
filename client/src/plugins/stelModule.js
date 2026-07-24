@@ -4,6 +4,9 @@ const activeLandscapes = new WeakMap();
 
 export const stelModule = {
   state: {
+    currentOverlay: null,
+    lowerComponent: null,
+    lowerComponentHeight: 0,
     settings: {
       loc: {},
       stellarium: {
@@ -38,7 +41,6 @@ export const stelModule = {
 
         const landscapeConfig = resolveLandscapeSource(settings, state.baseUrl);
         core.landscapes.visible = landscapeConfig.visible;
-        console.log(landscapeConfig);
 
         if (landscapeConfig.visible && landscapeConfig.source) {
           const nextLandscapeSignature = `${landscapeConfig.source.key}|${landscapeConfig.source.url}`;
@@ -48,8 +50,6 @@ export const stelModule = {
             activeLandscapes.set(core, nextLandscapeSignature);
           }
         }
-
-        console.log('Stellarium settings updated:',);
       }
     },
   },

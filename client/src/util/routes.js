@@ -1,5 +1,5 @@
 import Align from '@/components/pages/Align.vue'
-import Capture from '@/components/pages/Capture.vue'
+import Capture from '@/components/pages/capture/Capture.vue'
 import Focus from '@/components/pages/Focus.vue'
 import Guide from '@/components/pages/guide/Guide.vue'
 import LiveStack from '@/components/pages/LiveStack.vue'

@@ -14,8 +14,8 @@
   <v-dialog v-model="settingsVisible" max-width="900">
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
-        <span>{{ $t('components.stellarium.settings.title') }}</span>
-        <v-btn icon="mdi-close" variant="text" @click="settingsVisible = false"></v-btn>
+        <span>{{ $t('stellarium.settings.title') }}</span>
+        <v-btn icon="mdi-close" variant="text" @click="settingsVisible = false" />
       </v-card-title>
       <v-divider />
 
@@ -28,7 +28,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.constellations_lines_visible') }}
+                    {{ $t('stellarium.settings.constellations_lines_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -46,7 +46,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.azimuthal_lines_visible') }}
+                    {{ $t('stellarium.settings.azimuthal_lines_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -64,7 +64,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.equatorial_lines_visible') }}
+                    {{ $t('stellarium.settings.equatorial_lines_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -82,7 +82,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.meridian_lines_visible') }}
+                    {{ $t('stellarium.settings.meridian_lines_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -100,7 +100,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.ecliptic_lines_visible') }}
+                    {{ $t('stellarium.settings.ecliptic_lines_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -118,7 +118,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.atmosphere_visible') }}
+                    {{ $t('stellarium.settings.atmosphere_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -136,7 +136,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.landscapes_visible') }}
+                    {{ $t('stellarium.settings.landscapes_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -155,21 +155,21 @@
                     v-model="landscapeSourceSelection"
                     :items="[
                       {
-                        title: $t('components.stellarium.settings.landscape_source_default'),
+                        title: $t('stellarium.settings.landscape_source_default'),
                         value: 'default',
                       },
                       {
-                        title: $t('components.stellarium.settings.landscape_source_neutral'),
+                        title: $t('stellarium.settings.landscape_source_neutral'),
                         value: 'neutral',
                       },
                       ...listedLandscapeOptions.map(option => ({
-                        title: $t('components.stellarium.settings.landscape_option_label', {
+                        title: $t('stellarium.settings.landscape_option_label', {
                           title: option.title,
                         }),
                         value: option.value,
                       })),
                       {
-                        title: $t('components.stellarium.settings.landscape_source_custom'),
+                        title: $t('stellarium.settings.landscape_source_custom'),
                         value: 'custom',
                       },
                     ]"
@@ -214,7 +214,7 @@
 
                     <v-row align="center" justify="space-between">
                       <v-col>
-                        {{ $t('components.stellarium.settings.available_landscapes') }}
+                        {{ $t('stellarium.settings.available_landscapes') }}
                       </v-col>
 
                       <v-col cols="auto">
@@ -239,7 +239,7 @@
                       </p>
 
                       <p v-else-if="landscapeListLoaded && availableLandscapes.length === 0">
-                        {{ $t('components.stellarium.settings.no_landscapes_available') }}
+                        {{ $t('stellarium.settings.no_landscapes_available') }}
                       </p>
 
                       <v-list v-else max-height="220" class="overflow-y-auto">
@@ -254,7 +254,7 @@
                                 {{
                                   landscape.title ||
                                   landscape.folderName ||
-                                  $t('components.stellarium.settings.untitled_landscape')
+                                  $t('stellarium.settings.untitled_landscape')
                                 }}
                               </div>
 
@@ -264,19 +264,19 @@
                               >
                                 {{
                                   landscape.hasAllsky
-                                    ? $t('components.stellarium.settings.has_allsky')
-                                    : $t('components.stellarium.settings.no_allsky')
+                                    ? $t('stellarium.settings.has_allsky')
+                                    : $t('stellarium.settings.no_allsky')
                                 }}
                               </v-chip>
                             </div>
 
                             <div class="text-caption mt-1">
-                              {{ $t('components.stellarium.settings.folder_name_label') }}:
+                              {{ $t('stellarium.settings.folder_name_label') }}:
                               {{ landscape.folderName || '—' }}
                             </div>
 
                             <div class="text-caption">
-                              {{ $t('components.stellarium.settings.service_url_label') }}:
+                              {{ $t('stellarium.settings.service_url_label') }}:
                               {{ landscape.serviceUrl || '—' }}
                             </div>
 
@@ -296,7 +296,7 @@
               <v-card variant="outlined" class="pa-2">
                 <v-row align="center" justify="space-between">
                   <v-col>
-                    {{ $t('components.stellarium.settings.dsos_visible') }}
+                    {{ $t('stellarium.settings.dsos_visible') }}
                   </v-col>
                   <v-col cols="auto">
                     <v-switch
@@ -421,7 +421,7 @@ function toggleControls() {
 }
 
 function requestStellariumRefresh() {
-  store.dispatch("refreshRouterView");
+  // store.dispatch("refreshRouterView");
 }
 
 function saveLandscapeSourceSettings() {
@@ -450,14 +450,14 @@ async function fetchAvailableLandscapes() {
     } else {
       availableLandscapes.value = [];
       landscapeListError.value =
-        response?.message || t('components.stellarium.settings.landscape_list_load_failed');
+        response?.message || t('stellarium.settings.landscape_list_load_failed');
     }
   } catch (error) {
     const responseMessage = error?.response?.data?.message || error?.response?.data?.error;
     landscapeListError.value =
       responseMessage ||
       error?.message ||
-      t('components.stellarium.settings.landscape_list_load_failed');
+      t('stellarium.settings.landscape_list_load_failed');
     availableLandscapes.value = [];
   } finally {
     landscapeListLoading.value = false;

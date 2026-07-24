@@ -4,7 +4,7 @@ function h2g(ra) {
 
 const hms = (dec) => {
   const H = dec / 15;
-  if (H === null) return null;
+  if (H === NaN) return null;
   
   const h = Math.floor(H);
   const m = Math.floor(60 * (Math.abs(H) - h));
@@ -16,7 +16,7 @@ const hms = (dec) => {
     m.toString() +
     "m " +
     s.toFixed(2) +
-    (`s (${H.toFixed(3)}h)`)
+    "s"
   );
 };
 
@@ -29,7 +29,7 @@ const hmsFromH = (decimalH) => {
   return (`${h.toString()}h ${m.toString()}m ${s.toString()}s`);
 };
 
-const dms = (dec, extra = false) => {
+const dms = (dec) => {
   if (dec === null) return null;
   const negative = dec < 0.0 ? "-" : "+";
 
@@ -42,8 +42,7 @@ const dms = (dec, extra = false) => {
     "° " +
     m.toString() +
     "' " +
-    s.toFixed(2) +
-    (extra ? `" (${dec.toFixed(3)}°)` : "")
+    s.toFixed(2)
   );
 };
 

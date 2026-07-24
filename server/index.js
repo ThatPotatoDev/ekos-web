@@ -75,9 +75,17 @@ const gpsdListener = new nodeGpsd.Listener({
 
 // Keep track of the last messages of each type (merging them together) so we can
 // send new web clients our current status immediately.
+const disallowedTypes = [ "new_connection_state" ]
+const dontSaveToLastMessages = (payload, type) => {
+  if (type.startsWith("astro_")) {
+    return true;
+  } else if (disallowedTypes.includes(type)) return true;
+  return false;
+}
+
 const lastMessages = new Map();
 const saveToLastMessages = (msg) => {
-  if (typeof msg.payload.type == "string" && msg.payload.type.startsWith("astro_") && msg.payload.type != "astro_get_names") {
+  if (dontSaveToLastMessages(msg.payload, msg.type)) {
     
   } else if (Array.isArray(msg.payload)) {
     lastMessages.set(msg.type, msg.payload);
@@ -132,9 +140,11 @@ messageUser.on("connection", (userWs) => {
     if (msgObj.type === "daemon") {
       handleDaemonMsg(msgObj.payload);
       return;
+    } else if (msgObj.type === "log_dbg") {
+      console.log(msgObj.payload);
     } else if (msgObj.type === "client_save_settings") {
-      clientSettings = msgObj.payload;
-      writeFile(clientSettingsPath, JSON.stringify(msgObj.payload), "utf8")
+      clientSettings = { ...clientSettings, ...msgObj.payload };
+      writeFile(clientSettingsPath, JSON.stringify(clientSettings), "utf8")
       return;
     } else if (msgObj.type.startsWith("media_")) {
       mediaServer.clients.forEach(c => {
@@ -253,10 +263,17 @@ server.addListener("request", (req, res) => {
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibmRzd2FydHoxMUBnbWFpbC5jb20iLCJpYXQiOjE3NzkzMDc4MjcsImV4cCI6MTc3OTU2NzAyN30.y-QaJH9CzDw0UoUhbI6aWElrC6mwwIG_iHtG7W4HxzM",
         "success": true,
       }));
-      break;
+      return;
     }
-    default:
-      file.serve(req, res);
+    default: {
+      file.serve(req, res, (err) => {
+        if (err && !res.headersSent) {
+          res.writeHead(err.status, err.headers);
+          res.end("Not Found");
+        }
+      });
+      return;
+    }
   }
 })
 

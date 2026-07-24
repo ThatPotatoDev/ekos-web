@@ -1,34 +1,48 @@
 {
-  "components": {
-    "stellarium": {
-      "settings": {
-        "constellations_lines_visible": "Show Constellations",
-        "azimuthal_lines_visible": "Show azimuthal lines",
-        "equatorial_lines_visible": "Show equatorial lines",
-        "meridian_lines_visible": "Show meridian",
-        "ecliptic_lines_visible": "Show ecliptic",
-        "atmosphere_visible": "Show atmosphere",
-        "landscapes_visible": "Show landscapes",
-        "dsos_visible": "Deep Sky Objects (Messier, NGC)",
-        "title": "Settings",
-        "landscape_source_mode": "Landscape source",
-        "landscape_source_default": "Default landscape (Guereins)",
-        "landscape_source_neutral": "Neutral horizon (Gray)",
-        "landscape_source_custom": "Custom data source",
-        "landscape_option_label": "Landscape: {title}",
-        "custom_landscape_url": "Custom source URL",
-        "custom_landscape_url_placeholder": "e.g. /stellarium-data/landscapes/custom",
-        "custom_landscape_key": "Custom source key",
-        "custom_landscape_key_placeholder": "e.g. my-landscape",
-        "available_landscapes": "Available landscapes",
-        "no_landscapes_available": "No landscapes available.",
-        "untitled_landscape": "Untitled landscape",
-        "has_allsky": "Allsky",
-        "no_allsky": "No allsky",
-        "folder_name_label": "folderName",
-        "service_url_label": "serviceUrl",
-        "landscape_list_load_failed": "Failed to load landscapes."
-      }
+  "stellarium": {
+    "sel": {
+      "slew": "Slew"
+    },
+    "settings": {
+      "constellations_lines_visible": "Show Constellations",
+      "azimuthal_lines_visible": "Show azimuthal lines",
+      "equatorial_lines_visible": "Show equatorial lines",
+      "meridian_lines_visible": "Show meridian",
+      "ecliptic_lines_visible": "Show ecliptic",
+      "atmosphere_visible": "Show atmosphere",
+      "landscapes_visible": "Show landscapes",
+      "dsos_visible": "Deep Sky Objects (Messier, NGC)",
+      "title": "Settings",
+      "landscape_source_mode": "Landscape source",
+      "landscape_source_default": "Default landscape (Guereins)",
+      "landscape_source_neutral": "Neutral horizon (Gray)",
+      "landscape_source_custom": "Custom data source",
+      "landscape_option_label": "Landscape: {title}",
+      "custom_landscape_url": "Custom source URL",
+      "custom_landscape_url_placeholder": "e.g. /stellarium-data/landscapes/custom",
+      "custom_landscape_key": "Custom source key",
+      "custom_landscape_key_placeholder": "e.g. my-landscape",
+      "available_landscapes": "Available landscapes",
+      "no_landscapes_available": "No landscapes available.",
+      "untitled_landscape": "Untitled landscape",
+      "has_allsky": "Allsky",
+      "no_allsky": "No allsky",
+      "folder_name_label": "folderName",
+      "service_url_label": "serviceUrl",
+      "landscape_list_load_failed": "Failed to load landscapes."
+    }
+  },
+  "mount": {
+    "settings": {
+      "MeridianFlip": "Meridian Flip",
+      "flipIfHAGreaterThan": "Flip if HA >:",
+      "Limits": "Limits",
+      "enableAltitudeLimits": "Enable Alt limits",
+      "enableAltitudeLimitsTrackingOnly": "Tracking only",
+      "minimumAltLimit": "Min. Alt",
+      "maximumAltLimit": "Max. Alt",
+      "enableHaLimits": "Enable HA limits",
+      "maximumHaLimit": "Max. HA (hours)"
     }
   },
   "general": {
@@ -37,5 +51,19 @@
   "common": {
     "refresh": "Refresh",
     "loading": "Loading..."
-  }
+  },
+  "Magnitude": "Magnitude",
+  "Distance": "Distance",
+  "Spectral Type": "Spectral Type",
+  "Ra/Dec (JNOW)": "Ra/Dec",
+  "Ra/Dec (J2000)": "Ra/Dec (J2000)",
+  "Az/Alt": "Az/Alt",
+  "Phase": "Phase",
+  "Rise: {0}&nbsp;&nbsp;&nbsp; Set: {1}": "Rise: {0}&nbsp;&nbsp;&nbsp; Set: {1}",
+  "Visibility": "Visibility",
+  "Size": "Size",
+  "Also known as": "Also known as",
+  "Always visible tonight": "Always visible tonight",
+  "Not visible tonight": "Not visible tonight",
+  "Search...": "Search..."
 }

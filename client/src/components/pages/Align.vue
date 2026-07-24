@@ -163,7 +163,7 @@
         <v-select 
           v-model="settings.pAHRefreshAlgorithm" 
           :items="['Plate Solve'/*,'Move Star','Move Star & Calc Error'*/]"
-          label="Direction" 
+          label="Refresh Algorithm" 
         />
         <v-list class="no-v-list-background">
           <v-list-item>

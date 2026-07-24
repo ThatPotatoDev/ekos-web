@@ -1,25 +1,26 @@
 <template>
   <v-app id="app">
-    <v-app-bar app>
+    <v-app-bar app density="compact">
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Ekos Web</v-toolbar-title>
       <v-icon icon="mdi-cloud" height="24" class="mr-2" :class="socket.isConnected ? 'greenFilledIn' : 'redFilledIn'"/>
       <v-icon icon="mdi-laptop" height="24" class="mr-2" :class="connected ? 'greenFilledIn' : 'redFilledIn'"/>
       <v-icon icon="mdi-telescope" height="24" class="mr-2" :class="ekosStartedClass"/>
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" app>
-      <v-list dense>
-        <v-list-item link exact :to="{name: r.name}" v-for="r in routes" :key="r.name">
-          <v-list-item-action>
+    <v-navigation-drawer v-model="drawer" app :width="200">
+      <v-list density="comfortable">
+        <v-list-item link exact :to="{name: r.name}" v-for="r in routes" :key="r.name" prepend-gap="16" color="primary">
+          <template v-slot:prepend>
             <v-icon :icon="r.icon" height="24" />
-          </v-list-item-action>
+          </template>
           <v-list-item-title>{{r.label || r.name}}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-main>
+      <Stellarium v-show="$route.path === '/sky' && connection?.online" />
       <template v-if="connection?.online || $route.path === '/settings'">
-        <router-view :key="`${$route.fullPath}-${routerKeyTrigger}`" />
+        <router-view v-if="$route.path !== '/sky'" :key="`${$route.fullPath}`" />
       </template>
       <div v-else class="pa-2">
         <v-select v-model="profiles.selectedProfile" :items="profiles.profiles.map(p => p.name)" label="Profile" item-text="name" item-value="name" />
@@ -32,13 +33,21 @@
 import { routes } from "@/util/routes";
 import { mapActions, mapState } from "vuex";
 import { START_PROFILE, IndiStatus } from "./util/messageTypes";
+import Stellarium from "./components/stellarium/Stellarium.vue";
 
 export default {
+  components: {
+    Stellarium
+  },
+  data: () => ({
+    drawer: null,
+    routes: routes,
+  }),
   computed: {
     ...mapState([
       "connection", "indiStatus", 
       "socket", "profiles",
-      "routerKeyTrigger"
+      "stelStore"
     ]),
     connected() {
       return this.connection?.connected;
@@ -60,10 +69,6 @@ export default {
       }
     },
   },
-  data: () => ({
-    drawer: null,
-    routes: routes,
-  }),
   methods: {
     ...mapActions(["sendMsg", "findDeviceDetails"]),
     startProfileClicked() {

@@ -177,6 +177,9 @@ export const TRAIN_CONFIGURATION_REQUESTED = "train_configuration_requested";
 export const TRAIN_ACCEPT = "train_accept";
 export const TRAIN_SETTINGS_GET = "train_settings_get";
 
+export const FILE_DEFAULT_PATH = "file_default_path";
+export const FILE_DIRECTORY_OPERATION = "file_directory_operation";
+
 export const IndiStatus = Object.freeze({
   Idle: 0,
   Pending: 1,
@@ -263,4 +266,37 @@ export const GuiderType = Object.freeze({
   GUIDE_INTERNAL: 0,
   GUIDE_PHD2: 1,
   GUIDE_LINGUIDER: 2
+});
+
+export const QtType = Object.freeze({
+  Invalid: 0,
+  Bool: 1,
+  Int: 2,
+  UInt: 3,
+  LongLong: 4,
+  ULongLong: 5,
+  Double: 6,
+  Char: 7,
+  Map: 8,
+  List: 9,
+  String: 10,
+  StringList: 11,
+  ByteArray: 12,
+  BitArray: 13,
+  Date: 14,
+  Time: 15,
+  DateTime: 16,
+  Url: 17,
+  Locale: 18,
+  Rect: 19,
+  RectF: 20,
+  Size: 21,
+  SizeF: 22,
+  Line: 23,
+  LineF: 24,
+  Point: 25,
+  PointF: 26,
+  RegExp: 27,
+  RegularExpression: 28,
+  Hash: 29
 });
