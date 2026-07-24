@@ -13,7 +13,7 @@ server/clientSettings.json
 client/dist
 client/public/stellarium-data/dssGen/surveys/dss/Norder*
 
-scripts/catalog.json
+scripts/catalog.jsonl.gz
 scripts/stelDataZips
 scripts/hips/urls-Norder*
 
