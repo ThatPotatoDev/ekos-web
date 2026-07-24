@@ -1,0 +1,19 @@
+[versions]
+shadow = "9.4.3"
+hppc = "0.11.0"
+gson = "2.14.0"
+javalin = "7.2.2"
+slf4j = "2.0.17"
+commons-text = "1.15.0"
+graalvm = "1.1.4"
+
+[libraries]
+hppc = { module="com.carrotsearch:hppc", version.ref="hppc" }
+gson = { module="com.google.code.gson:gson", version.ref="gson" }
+javalin = {module="io.javalin:javalin",version.ref="javalin"}
+slf4j = { module="org.slf4j:slf4j-simple", version.ref="slf4j"}
+commonsText = { module="org.apache.commons:commons-text", version.ref="commons-text" }
+
+[plugins]
+shadow = { id="com.gradleup.shadow", version.ref="shadow" }
+graalvm = { id="org.graalvm.buildtools.native", version.ref="graalvm"}
