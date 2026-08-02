@@ -5,9 +5,25 @@
       height: `calc(100dvh - var(--v-layout-top))`
     }"
   >
+    <div id="nightmode" :style="{opacity: `${stelStore.settings.nightMode ? stelStore.settings.nightModeIntensity : 0}%`}"></div>
     <canvas ref="stelCanvas" class="stellarium-canvas" :style="{
       transform: `translateY(-${lowerComponentHeight / 2}px)`
     }"></canvas>
+
+    <div
+      v-if="!stelStore.isStellariumReady"
+      class="position-absolute top-0 left-0 w-100 h-100 d-flex flex-column align-center justify-center ga-4"
+      style="z-index: 999; background: rgb(var(--v-theme-background), 255);"
+    >
+      <v-progress-circular
+        indeterminate
+        :size="48"
+        color="cyan"
+      />
+      <span class="text-white text-body-2">
+        {{ $t('common.loading') }}
+      </span>
+    </div>
 
     <div style="position:fixed; top: calc(var(--v-layout-top) + 2px); right: 2px;">
       <v-fab v-if="stelStore.currentOverlay === null" @click="stelStore.currentOverlay = 'search'" 
@@ -21,19 +37,12 @@
 
     <stelFraming v-if="stelStore.stel" />
 
-    <!-- Camera FOV Rotation Control + View-Center Actions -->
-    <!-- <StellariumFovRotation v-if="showFovFrame" /> -->
-
-    <skysourceSearch v-if="stelStore.stel" />
+    <stelSearch v-if="stelStore.stel" />
 
     <!-- Overlay für das ausgewählte Objekt -->
-    <div
-      class="left-2 position-fixed d-flex ga-2 pa-2 rounded-pill stellarium-controls"
-      style="left: 8px; background-color: rgba(0, 0, 0, 0.5);"
-      :style="{bottom: `calc(${lowerComponentHeight}px + 8px)`}"
-    >
-      <stellariumSettings />
-    </div>
+
+    <stellariumSettings v-if="stelStore.stel" />
+
     <!-- <stellariumCredits /> -->
     <!-- Clock -->
     <!-- <stellariumClock v-if="this.stelStore.stel" /> -->
@@ -53,11 +62,11 @@
 </template>
 <script>
 import { mapActions, mapState } from 'vuex';
-import stellariumSettings from "./stellariumSettings.vue"
+import stellariumSettings from "./settings/stellariumSettings.vue"
 import selectedObject from "./selectedObject.vue"
 import stelMount from './stelMount.vue';
 import stelFraming from './stelFraming.vue';
-import skysourceSearch from './skysourceSearch.vue';
+import stelSearch from './stelSearch.vue';
 import { degreesToDMS, degreesToHMS, rad2deg } from './stelUtil';
 import _ from "lodash";
 
@@ -67,11 +76,12 @@ const HIDDEN_UPDATE_INTERVAL_MS = 1000;
 let lastHiddenUpdateTs = 0;
 let renderActive = true;
 
+let renderWaitHandle = null;
 export default {
   components: {
     stellariumSettings,
     selectedObject,
-    skysourceSearch,
+    stelSearch,
     stelMount,
     stelFraming
   },
@@ -84,7 +94,7 @@ export default {
       "stelStore"
     ]),
     ...mapState({
-      loc: s => s.stelStore.settings.loc,
+      loc: s => s.stelStore.loc,
       lowerComponentHeight: s => s.stelStore.lowerComponentHeight
     }),
     showFovFrame() {
@@ -95,114 +105,115 @@ export default {
   },
   methods: {
     ...mapActions(["updateStellariumCore"]),
-    loadStellarium(loc) {
-      const utcToMJD = utcDate => {
-        return utcDate.getTime() / 86400000 + 40587;
-      }
+    waitForStellariumRender() {
+      renderWaitHandle = setTimeout(() => {
+        if (!this.stelStore.stel) return; // engine is gone in the meantime
+        // Wait two more frames so the first rendered sky is visible.
+        requestAnimationFrame(() => requestAnimationFrame(() => (this.stelStore.isStellariumReady = true)));
+      }, 1500);
+    },
+    async initStellarium() {
       const stelStore = this.stelStore;
       const settings = stelStore.settings;
-      const updateStellariumCore = this.updateStellariumCore;
+      if (!window.StelWebEngine) {
+        console.error('StelWebEngine global object not found!');
+        return;
+      }
+      try {
+        const response = await fetch(wasmPath);
+        if (!response.ok) {
+          throw new Error(`Error loading WASM file: ${response.statusText}`);
+        }
+        const wasmArrayBuffer = await response.arrayBuffer();
+        console.log('WASM file loaded successfully. Size (bytes):', wasmArrayBuffer.byteLength);
 
-      // Schritt 1) Stellarium-Web-Engine-Skript dynamisch laden
+        window.StelWebEngine({
+          wasmFile: wasmPath,
+          canvas: this.$refs.stelCanvas,
+          onReady: async (stel) => {
+            console.log('Stellarium is ready!');
+
+            const utcToMJD = utcDate => {
+              return utcDate.getTime() / 86400000 + 40587;
+            }
+            stelStore.stel = stel;
+            stelStore.stelT = stel.getTree();
+
+            stel.onValueChanged((path, val) => {
+              const tree = stelStore.stelT;
+              _.set(tree, path, val);
+              stelStore.stelT = tree;
+            });
+            stelStore.selectionLayer = stel.createLayer({ id: 'slayer', z: 50, visible: true });
+
+            stel.core.observer.latitude = this.loc.latitude * stel.D2R;
+            stel.core.observer.longitude = this.loc.longitude * stel.D2R;
+            stel.core.observer.elevation = this.loc.elevation;
+
+            const serverTime = new Date();
+            const mjd = utcToMJD(serverTime);
+            stel.core.observer.utc = mjd;
+            console.log('Stellarium initialized with server time:', serverTime.toISOString());
+
+            stel.core.time_speed = 1;
+
+            stelStore.stel = stel;
+            this.installRenderGate();
+
+            const protocol = settings.backendProtocol || 'http';
+            const host = window.location.hostname;
+            const port = window.location.port;
+            const baseUrl = `${protocol}://${host}:${port}/stellarium-data/`;
+            stelStore.baseUrl = baseUrl;
+            const core = stel.core;
+
+            core.dsos.hints_mag_offset = 3;
+
+            core.stars.addDataSource({ url: baseUrl + 'minimal/stars', key: 'minimal' });
+            core.stars.addDataSource({ url: baseUrl + 'base/stars', key: 'base' });
+            core.stars.addDataSource({ url: baseUrl + 'extended/stars', key: 'extended' });
+            core.skycultures.addDataSource({ url: baseUrl + 'skycultures/western', key: 'western' });
+
+            core.dsos.addDataSource({ url: baseUrl + 'base/dso', key: 'base' });
+            core.dsos.addDataSource({ url: baseUrl + 'extended/dso', key: 'extended' });
+
+            core.dss.addDataSource({ url: baseUrl + 'dssGen/surveys/dss', key: 'dssGen' });
+            core.milkyway.addDataSource({ url: baseUrl + 'base/surveys/milkyway/v1' });
+
+            core.landscapes.addDataSource({ url: baseUrl + 'landscapes/guereins', key: 'guereins' });
+            // core.landscapes.addDataSource({ url: baseUrl + 'landscapes/gray', key: 'gray' });
+            //core.satellites.addDataSource({url: baseUrl + 'tle_satellite.jsonl.gz',key: 'jsonl/sat', });
+            core.comets.addDataSource({ url: baseUrl + 'CometEls.txt', key: 'mpc_comets' });
+            core.minor_planets.addDataSource({ url: baseUrl + 'mpcorb.dat', key: 'mpc_asteroids' });
+            
+            const addSSOSources = (ids) => {
+              for (const id of ids) {
+                core.planets.addDataSource({ url: `${baseUrl}base/surveys/sso/${id}/v1`, key: id });
+              }
+            };
+            
+            addSSOSources([
+              "moon", "sun",
+              "mercury", "venus", "mars",
+              "jupiter", "saturn", "uranus",
+              "neptune",
+              "io", "europa", "ganymede", "callisto"
+            ]);
+            
+            this.waitForStellariumRender();
+          },
+        })
+      } catch (err) {
+        console.error('Error with Fetch or StelWebEngine:', err);
+      }
+    },
+    loadStellarium(loc) {
+
       const script = document.createElement('script');
       script.src = '/stellarium-js/stellarium-web-engine.js';
       console.log('Loading Stellarium Web Engine script...');
 
-      script.onload = async () => {
-        if (!window.StelWebEngine) {
-          console.error('StelWebEngine global object not found!');
-          return;
-        }
-
-        try {
-          const response = await fetch(wasmPath);
-          if (!response.ok) {
-            throw new Error(`Error loading WASM file: ${response.statusText}`);
-          }
-          const wasmArrayBuffer = await response.arrayBuffer();
-          console.log('WASM file loaded successfully. Size (bytes):', wasmArrayBuffer.byteLength);
-
-          window.StelWebEngine({
-            wasmFile: wasmPath,
-
-            canvas: this.$refs.stelCanvas,
-            onReady: async (stel) => {
-              console.log('Stellarium is ready!');
-              stelStore.stel = stel;
-              stelStore.stelT = stel.getTree();
-              stel.onValueChanged((path, val) => {
-                const tree = stelStore.stelT;
-                _.set(tree, path, val);
-                stelStore.stelT = tree;
-              });
-              stelStore.selectionLayer = stel.createLayer({ id: 'slayer', z: 50, visible: true });
-
-              // Beobachter-Standort setzen (Koordinaten müssen in Radian sein):
-              stel.core.observer.latitude = loc.latitude * stel.D2R;
-              stel.core.observer.longitude = loc.longitude * stel.D2R;
-              stel.core.observer.elevation = loc.elevation;
-
-              // Ensure timeSync is synced, then set server time
-              // await timeSync.ensureSync();
-              const serverTime = new Date(); //(timeSync.getServerTime());
-              const mjd = utcToMJD(serverTime);
-              stel.core.observer.utc = mjd;
-              console.log('Stellarium initialized with server time:', serverTime.toISOString());
-
-              stel.core.time_speed = 1;
-
-              stelStore.stel = stel;
-              this.installRenderGate();
-
-              // Schritt 3) Datenquellen (Kataloge) hinzufügen
-              //IP und Port vom Plugin ermitteln
-              const protocol = settings.backendProtocol || 'http';
-              const host = settings.connection?.ip || window.location.hostname;
-              const port = settings.connection?.port || window.location.port;
-              const baseUrl = `${protocol}://${host}:${port}/stellarium-data/`;
-              stelStore.baseUrl = baseUrl;
-              const core = stel.core;
-
-              core.dsos.hints_mag_offset = 3;
-
-              core.stars.addDataSource({ url: baseUrl + 'minimal/stars', key: 'minimal'});
-              core.stars.addDataSource({ url: baseUrl + 'base/stars', key: 'base' });
-              core.stars.addDataSource({ url: baseUrl + 'extended/stars', key: 'extended' });
-              core.skycultures.addDataSource({ url: baseUrl + 'skycultures/western', key: 'western' });
-
-              core.dsos.addDataSource({ url: baseUrl + 'base/dso', key: 'base' });
-              core.dsos.addDataSource({ url: baseUrl + 'extended/dso', key: 'extended' });
-
-              core.dss.addDataSource({ url: baseUrl + 'dssGen/surveys/dss', key: 'dssGen'});
-              core.milkyway.addDataSource({ url: baseUrl + 'base/surveys/milkyway/v1' });
-              //core.landscapes.addDataSource({ url: baseUrl + 'landscapes/guereins', key: 'guereins' });
-              //core.landscapes.addDataSource({ url: baseUrl + 'landscapes/gray', key: 'guereins' });
-
-              core.comets.addDataSource({ url: baseUrl + 'CometEls.txt', key: 'mpc_comets' });
-              core.minor_planets.addDataSource({ url: baseUrl + 'mpcorb.dat', key: 'mpc_asteroids' });
-
-              const addSSOSources = (ids) => {
-                for (const id of ids) {
-                  core.planets.addDataSource({ url: `${baseUrl}base/surveys/sso/${id}/v1`, key: id });
-                }
-              };
-              addSSOSources([
-                "moon", "sun",
-                "mercury", "venus", "mars",
-                "jupiter", "saturn", "uranus",
-                "neptune",
-                "io", "europa", "ganymede", "callisto"
-              ])
-              
-              // core.satellites.addDataSource({url: baseUrl + 'tle_satellite.jsonl.gz',key: 'jsonl/sat', });
-
-              updateStellariumCore();
-            },
-          })
-        } catch (err) {
-          console.error('Error with Fetch or StelWebEngine:', err);
-        }
-      };
+      script.onload = this.initStellarium;
       document.head.appendChild(script);
     },
     installRenderGate() {
@@ -253,6 +264,7 @@ export default {
     },
     setRenderActive(active) {
       renderActive = active;
+      this.stelStore.visible = active;
       if (active) {
         // Force one update so the canvas is up to date the instant it becomes visible.
         if (typeof this.stelStore.stel?._core_update === 'function') {
@@ -266,6 +278,14 @@ export default {
       } else {
         this.setRenderActive(this.$route.path === "/sky");
       }
+    },
+    handleTouchCancel(e) {
+      const stel = this.stelStore.stel;
+      if (typeof stel?._core_on_mouse !== 'function' || !this.$refs.stelCanvas) return;
+      const rect = this.$refs.stelCanvas.getBoundingClientRect();
+      for (const touch of e.changedTouches) {
+        stel._core_on_mouse(touch.identifier, 0, touch.pageX - rect.left, touch.pageY - rect.top, 1);
+      }
     }
   },
   watch: {
@@ -277,36 +297,62 @@ export default {
         if (this.stelStore.stel) return;
         // cant setup a telescope over an ocean so this is a safe check
         if (loc.latitude === 0 && loc.longitude === 0) return; 
-        this.loadStellarium(loc);
+        this.loadStellarium();
       }
     },
+    "$route.path"(path) {
+      this.setRenderActive(path === "/sky"); 
+    }
   },
   mounted() {
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    this.$refs.stelCanvas?.addEventListener('touchcancel', this.handleTouchCancel, { passive: true });
+    renderActive = this.stelStore.visible && this.$route.path === "/sky";
   },
   beforeUnmount() {
     this.stelStore.currentOverlay = null;
+
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    this.$refs.stelCanvas?.removeEventListener('touchcancel', this.handleTouchCancel);
+
+    // The engine's render loop cannot be stopped, so at least disable rendering so
+    // it stops producing GPU work once the component is gone.
+    renderActive = false;
+
+    if (renderWaitHandle) {
+      clearTimeout(renderWaitHandle);
+      renderWaitHandle = null;
+    }
+    if (this.stelStore.stel) {
+      console.log('Tearing down Stellarium...');
+      this.stelStore.stel = null;
+
+      if (this.$refs.stelCanvas) {
+        this.$refs.stelCanvas.width = 0;
+        this.$refs.stelCanvas.height = 0;
+      }
+
+      console.log('Stellarium torn down.');
+    }
   }
-  // beforeUnmount() {
-  //   if (this.stelStore.stel) {
-  //     console.log('Destroying Stellarium...');
-
-  //     // Entferne die Stellarium-Instanz
-  //     this.stelStore.stel = null;
-
-  //     if (this.$refs.stelCanvas.value) {
-  //       this.$refs.stelCanvas.value.width = 0;
-  //       this.$refs.stelCanvas.value.height = 0;
-  //     }
-
-  //     console.log('Stellarium successfully terminated.');
-  //   }
-  // }
 }
 </script>
 <style scoped>
 
+#nightmode {
+  background: #ff2200;
+  pointer-events: none;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  z-index: 1000;
+  mix-blend-mode: multiply;
+}
+
 .stellarium-container {
+  touch-action: none;
+  -webkit-touch-callout: none;
+
   left: 0;
   width: 100%;
   overflow: hidden;
@@ -314,18 +360,21 @@ export default {
   height: calc(100dvh - var(--v-layout-top));
 }
 
-@media screen and (orientation: landscape) {
-  .stellarium-controls.left-2 {
-    left: 9rem !important;
-  }
-}
-
 .stellarium-canvas {
   min-height: 0;
   width: 100%;
   height: 100%;
-  height: calc(100dvh - var(--v-layout-top));
   display: block;
+  /* Keep the browser from claiming pan/pinch/double-tap gestures on the sky
+     canvas — WebKit otherwise aborts engine touches with touchcancel. */
+  /* touch-action: none; */
+  /* No long-press text-selection/magnifier callout on iPadOS. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 .get-click {

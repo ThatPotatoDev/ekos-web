@@ -1,14 +1,14 @@
 <template>
 <div>
-  <div style="position:fixed; top: calc(var(--v-layout-top) + 32px); left: 2px;">
+  <div style="position:fixed; top: calc(var(--v-layout-top) + 2.5em); left: 0.25em;">
     <v-fab v-if="stelStore.currentOverlay === null"
       icon size="small" variant="text"
       :disabled="stelStore.lowerComponent === 'framing'"
       @click="showFramingDialog()"
     >
-      <div class="d-inline-flex align-center justify-center position-relative" style="width: 28px; height: 28px;">
-        <v-icon color="rgba(255,255,255,0.8)" icon="mdi-crop-free" size="28" class="position-absolute" />
-        <v-icon style="top: 7.5px" color="rgba(255,255,255,0.8)" icon="mdi-camera" size="14" class="position-absolute" />
+      <div class="d-inline-flex align-center justify-center position-relative">
+        <v-icon color="rgba(255,255,255,0.8)" icon="mdi-crop-free" size="x-large" class="position-absolute" />
+        <v-icon style="top: -0.45em" color="rgba(255,255,255,0.8)" icon="mdi-camera" class="v-icon-med-small position-absolute" />
       </div>
     </v-fab>
   </div>
@@ -147,7 +147,7 @@ export default {
       });
     },
     viewFovLoop() {
-      if (this.$route.path !== "/sky") {
+      if (!this.stelStore.visible) {
         this.rafId = null;
         return;
       }
@@ -217,10 +217,10 @@ export default {
     }
   },
   watch: {
-    "$route.path"(path) {
-      if (path === "/sky" && this.rafId === null) {
+    "stelStore.visible"(visible) {
+      if (visible && this.rafId === null) {
         this.rafId = requestAnimationFrame(this.viewFovLoop);
-      }
+      } else this.showFraming = false;
     },
     cameraFov() {
       this.lastViewRa = null;
@@ -262,5 +262,9 @@ export default {
     this.fovLayer = null;
   }
 }
-
 </script>
+<style scoped>
+.v-icon-med-small {
+    font-size: calc(var(--v-icon-size-multiplier) * 1.125em);
+}
+</style>

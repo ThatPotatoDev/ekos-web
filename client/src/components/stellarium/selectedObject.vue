@@ -258,6 +258,15 @@ export default {
 
       addAttr(that.$t('Magnitude'), 'vmag', this.formatMagnitude)
       addAttr(that.$t('Distance'), 'distance', this.formatDistance)
+      addAttr(that.$t('Apparent Diameter'), 'radius', (radius => {
+        const appDiamArcSec = radius * 2.0 * stel.R2D * 3600
+        const appDiamArcMin = appDiamArcSec / 60;
+        if (appDiamArcMin > 1) {
+          return appDiamArcMin.toFixed(2)+'<span class="radecUnit"> arcmin</span>';
+        }
+        return appDiamArcSec.toFixed(2)+'<span class="radecUnit"> arcsec</span>';
+      }));
+
       if (this.selectedObject.model_data) {
         if (this.selectedObject.model_data.radius) {
           ret.push({

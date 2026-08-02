@@ -1,9 +1,9 @@
 <template>
-  <div style="position:fixed; top: calc(var(--v-layout-top) + 2px); left: 2px;">
+  <div style="position:fixed; top: calc(var(--v-layout-top) + 0.25em); left: 0.25em;">
     <v-fab v-if="stelStore.currentOverlay === null" @click="syncToMountView" 
       icon size="small" color="transparent" variant="text"
     >
-      <v-icon icon="mdi-telescope" size="28" color="rgba(255,255,255,0.8)" /> 
+      <v-icon icon="mdi-telescope" size="x-large" color="rgba(255,255,255,0.8)" /> 
     </v-fab>
   </div>
 </template>

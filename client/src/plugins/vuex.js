@@ -446,7 +446,7 @@ const store = createStore({
       state.objectsInfo = message.payload;
     },
     [ASTRO_GET_LOCATION](state, message) {
-      state.stelStore.settings.loc = message.payload;
+      state.stelStore.loc = message.payload;
     },
     // [LIVESTACK_LOG](state, message) {
     //   const msg = { ts: new Date(), message: message.payload }

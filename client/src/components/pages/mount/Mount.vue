@@ -3,7 +3,6 @@
     <div class="text-headline-large">Mount</div>
     <v-divider class="mb-2" />
     <div class="text-headline-small">{{ mount.status }}</div>
-    <SkyMap :center="mountPosition" />
     <v-divider class="mb-2 mt-2" />
     <v-row>
       <v-col>

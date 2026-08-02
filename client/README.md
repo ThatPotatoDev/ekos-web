@@ -5,7 +5,7 @@ This project has been updated to use Vite instead of Vue CLI. Please refer to th
 ## Updated Scripts
 
 - **Development**: `vite`  
-  Now, the development server can be started by running `npm run dev`.
+  The development server can be started by running `npm run dev`.
 
 - **Build**: `vite build`  
   Use this command to create a production build of the application.
