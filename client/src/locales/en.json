@@ -1,7 +1,8 @@
 {
   "stellarium": {
     "sel": {
-      "slew": "Slew"
+      "slew": "Slew",
+      "center": "Center"
     },
     "settings": {
       "GridsAndLines": "Grids & Lines",
@@ -17,7 +18,6 @@
        "boundaries": "Boundaries",
        "centeredOnly": "Centered only",
       "Landscape": "Landscape",
-
       "Atmosphere": "Atmosphere",
       "Labels": "Labels",
        "stars": "Stars",

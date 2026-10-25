@@ -353,6 +353,9 @@ public class AstroCatalog {
 				this.morpho.add(morpho.isBlank() ? null : morpho);
 				this.tempVmag.add(vmag);
 
+				this.tempPm_ra.add(Double.NaN);
+				this.tempPm_de.add(Double.NaN);
+
 				this.tempPlx.add(-1);
 				this.tempBv.add(-1000);
 

@@ -4,37 +4,48 @@
   :style="{ height: `${currentHeight}px` }"
 >
   <v-card>
-    <div v-if="showSelectedInfoButtons" style="position: absolute; right: 10px; top: 10px">
-      <v-fab v-if="showPointToButton" icon size="small" variant="text" v-on:click.native="lockToSelection()">
-        <img src="@/assets/svg/point_to.svg" height="40px" style="min-height: 40px" />
-      </v-fab>
-      <v-fab v-if="!showPointToButton && !isMount" icon size="small" variant="text" v-on:click.native="showGotoDialog = true">
-        <img src="@/assets/svg/outline.svg" height="40px" style="min-height: 40px">
-          <v-icon icon="mdi-telescope" class="position-absolute" />
-        </img>
-      </v-fab>
-      <v-fab v-if="!showPointToButton" class="ml-4" icon size="small" variant="text" @mousedown="zoomOutButtonClicked()">
-        <img :class="{bt_disabled: !zoomButtonsEnabled}" src="@/assets/svg/remove_circle_outline.svg" height="40px" style="min-height: 40px"></img>
-      </v-fab>
-      <v-fab v-if="!showPointToButton" class="ml-4" icon size="small" variant="text" @mousedown="zoomInButtonClicked()">
-        <img :class="{bt_disabled: !zoomButtonsEnabled}" src="@/assets/svg/add_circle_outline.svg" height="40px" style="min-height: 40px"></img>
-      </v-fab>
-    </div>
     <v-card-title ref="cardTitle" class="bottom-elevation-3" style="cursor: grab; user-select: none;" primary-title @pointerdown="startDrag">
       <div class="drag-handle-container">
         <div class="drag-handle" :style="{ 
           background: `rgba(255,255,255,${dragging?'.6':'.3'})`
-        }">
+          }"></div>
       </div>
-    </div>
-      <div style="width: 100%" class="d-flex align-start">
-        <img v-if="!isMount" :src="icon" height="48" width="48" align="left" style="margin-top: 3px; margin-right: 10px"/>
-        <v-icon v-else icon="mdi-telescope" size="48" align="left" 
-          style="margin-top: 3px; margin-right: 10px"
-        />
-        <div style="overflow: hidden; text-overflow: ellipsis;">
+      <div class="d-flex align-start w-100">
+        <img v-if="!isMount" :src="icon" style="width: 2em; height: 2em;" class="mt-1 mr-3" />
+        <v-icon v-else icon="mdi-telescope" size="x-large" class="mt-1 mr-3" />
+        <div class="flex-grow-1" style="min-width:0; white-space: wrap">
           <div class="text-headline-small">{{ title }}</div>
           <div class="text-grey text-body-medium">{{ type }}</div>
+        </div>
+        <div
+          class="d-flex flex-nowrap align-start ml-1"
+          style="cursor: default;"
+          @pointerdown.stop
+        >
+          <label-container v-if="showPointToButton" label="stellarium.sel.center">
+            <template #default>
+              <v-fab icon size="small" variant="text" v-on:click.native="lockToSelection()">
+                <img src="@/assets/svg/point_to.svg" height="40px" style="min-height: 40px" />
+              </v-fab>
+            </template>
+          </label-container>
+          <label-container v-if="!showPointToButton && !isMount" label="stellarium.sel.slew">
+            <template #default>
+              <v-fab icon size="small" variant="text"
+                v-on:click.native="showGotoDialog = true"
+              >
+                <img src="@/assets/svg/outline.svg" height="40px" style="min-height: 40px">
+                  <v-icon icon="mdi-telescope" size="x-small" class="position-absolute" />
+                </img>
+              </v-fab>
+            </template>
+          </label-container>
+          <v-fab v-if="!showPointToButton" class="ml-3" icon size="small" variant="text" @mousedown="zoomOutButtonClicked()">
+            <img :class="{bt_disabled: !zoomButtonsEnabled}" src="@/assets/svg/remove_circle_outline.svg" height="40px" style="min-height: 40px"></img>
+          </v-fab>
+          <v-fab v-if="!showPointToButton" class="ml-3" icon size="small" variant="text" @mousedown="zoomInButtonClicked()">
+            <img :class="{bt_disabled: !zoomButtonsEnabled}" src="@/assets/svg/add_circle_outline.svg" height="40px" style="min-height: 40px"></img>
+          </v-fab>
         </div>
       </div>
     </v-card-title>
@@ -78,14 +89,17 @@ import swh from '@/assets/swh_helpers.js';
 import Moment from "moment";
 import { ASTRO_GET_OBJECTS_INFO, MOUNT_GOTO_RADE, MOUNT_GOTO_TARGET } from "../../util/messageTypes";
 import { hmsFromH, dms } from "@/util/coords"
+import LabelContainer from "./settings/labelContainer.vue";
 
 export default {
+  components: {
+    LabelContainer
+  },
   data: () => ({
     selectedObject: undefined,
     selectedSweObj: undefined,
     showMinorNames: false,
     items: [],
-    showSelectedInfoButtons: true,
     showGotoDialog: false,
 
     dragging: false,
@@ -153,6 +167,19 @@ export default {
     }
   },
   watch: {
+    //TODO: update height when overflow change
+    // showPointToButton(v) {
+    //   const prevFullHeight = this.fullHeight;
+    //   const prevTitleHeight = this.titleHeight;
+    //   requestAnimationFrame(() => {
+    //     this.updateCollapsedHeight();
+    //     if (this.currentHeight === prevFullHeight) {
+    //       this.currentHeight = this.fullHeight;
+    //     } else if (this.currentHeight === prevTitleHeight) {
+    //       this.currentHeight = this.titleHeight;
+    //     }
+    //   });
+    // },
     selectedObject(s) {
       this.showMinorNames = false;
       if (!s) {
@@ -161,8 +188,9 @@ export default {
         this.timer = undefined;
         return;
       }
-      if (this.stelStore.lowerComponent && this.stelStore.lowerComponent !== "selected") {
-        this.stelStore.stel.core.selection = 0
+      if (this.stelStore.lowerComponent && this.stelStore.lowerComponent === "framing") {
+        this.stelStore.stel.pointAndLock(this.stelStore.stel.core.selection);
+        // this.stelStore.stel.core.selection = 0
         return;
       }
       const prevFullHeight = this.fullHeight;
@@ -183,8 +211,7 @@ export default {
       var that = this;
       that.items = that.computeItems();
       if (that.timer) clearInterval(that.timer);
-      that.timer = setInterval(() => { that.items = that.computeItems() }, 1000)
-
+      that.timer = setInterval(() => { that.items = that.computeItems() }, 1000);
     },
     stelSelectionId(s) {
       // this.sendMsg(["log_dbg", {msg: JSON.stringify(this.stel.core)}])

@@ -5,10 +5,6 @@ const zlib = require("zlib");
 const { Readable, Transform } = require('stream');
 const { pipeline } = require('stream/promises');
 
-BigInt.prototype.toJSON = function () {
-  return Number(this);
-};
-
 const DSO_MAX_MAG = 14;
 const STAR_MAX_MAG = 10.75; // extended survey's max is 11.5
 
@@ -289,7 +285,6 @@ function parseStarChunk(data) {
     const pde = readFloat(row, cols["pde"], undefined, units.EPH_RAD_PER_YEAR);
 
     stars.push({
-      model: "star",
       names,
       Vmag: Number.isNaN(vmag) ? undefined : vmag,
       spec: readString(row, cols["spec"], undefined),
@@ -404,8 +399,7 @@ async function buildCatalog(root) {
               items.push(...parseStarChunk(chunk.data));
               break;
             case "DSO ":
-              //TODO: recompile query server and uncomment this
-              // items.push(...parseDsoChunk(chunk.data));
+              items.push(...parseDsoChunk(chunk.data));
               break;
           }
         }

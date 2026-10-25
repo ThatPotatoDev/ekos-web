@@ -27,7 +27,6 @@
           <template v-slot:prepend>
             <img :src="iconForSkySource(item)" />
           </template>
-          <!-- <v-list-item-title>{{ nameForSkySource(source) }}</v-list-item-title> -->
           <v-list-item-title class="vListTitle">{{ nameForSkySource(item) }}</v-list-item-title>
           <v-list-item-subtitle class="vListSubTitle">{{ typeToName(item.types[0]) }}</v-list-item-subtitle>
         </v-list-item>

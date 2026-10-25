@@ -31,14 +31,13 @@
         <v-slider hide-details readonly label="Rotation" v-model="rotation" :min="-180" :max="180" thumb-label="always" />
         
         <v-row class="pt-1">
-          <v-col>
+          <v-col style="white-space: nowrap; overflow: visible;">
             RA: {{ formatRaDe(raDe[0]) }}
           </v-col>
-          <v-col>
+          <v-col style="white-space: nowrap; overflow: visible;">
             DE: {{ formatRaDe(raDe[1]) }}
           </v-col>
         </v-row>
-        
       </v-card-text>
     </v-card>
   </v-bottom-sheet>

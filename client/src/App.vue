@@ -13,7 +13,7 @@
           <template v-slot:prepend>
             <v-icon :icon="r.icon" height="24" />
           </template>
-          <v-list-item-title>{{r.label || r.name}}</v-list-item-title>
+          <v-list-item-title>{{ r.label || r.name }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
